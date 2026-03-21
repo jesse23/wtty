@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "preinstall": "bun scripts/check-pkg-manager.ts",
-    "start": "bun run src/server.ts",
+    "dev": "bun run src/server.ts",
+    "preview": "bun run dist/server.js",
     "lint": "tsc --noEmit -p tsconfig.lint.json && biome check .",
     "lint:fix": "tsc --noEmit -p tsconfig.lint.json && bunx biome check --write .",
     "build": "bun run scripts/build.ts",
