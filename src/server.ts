@@ -351,7 +351,7 @@ wss.on('connection', (ws: WS, req: http.IncomingMessage) => {
   sessions.set(ws, { pty: ptyProcess });
 
   ptyProcess.onData((data: string) => {
-    if (ws.readyState === ws.OPEN) ws.send(data);
+    if (ws.readyState === ws.OPEN) ws.send(data, { binary: false });
   });
 
   ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
