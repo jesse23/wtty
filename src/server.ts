@@ -482,5 +482,6 @@ process.on('SIGINT', () => {
 });
 
 httpServer.listen(HTTP_PORT, () => {
-  console.log(`wtty listening on http://localhost:${HTTP_PORT}`);
+  const ptyBackend = process.versions.bun ? 'Bun.Terminal' : 'node-pty';
+  console.log(`wtty listening on http://localhost:${HTTP_PORT} (pty: ${ptyBackend})`);
 });
