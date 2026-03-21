@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import nodePty from '@lydell/node-pty';
-import type { PtyProcess } from './index.ts';
+import type { PtyProcess } from './index';
 
 export function spawn(shell: string, cols: number, rows: number): PtyProcess {
   const ptyProc = nodePty.spawn(shell, [], {

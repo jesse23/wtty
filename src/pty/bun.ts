@@ -1,5 +1,5 @@
 import { homedir } from 'node:os';
-import type { PtyProcess } from './index.ts';
+import type { PtyProcess } from './index';
 
 export function spawn(shell: string, cols: number, rows: number): PtyProcess {
   let onDataCb: ((data: string) => void) | undefined;

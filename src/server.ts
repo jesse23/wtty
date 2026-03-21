@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { WebSocket as WS } from 'ws';
 import { WebSocketServer } from 'ws';
-import { type PtyProcess, spawn as spawnPty } from './pty/index.ts';
+import { type PtyProcess, spawn as spawnPty } from './pty';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
