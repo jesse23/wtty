@@ -4,9 +4,86 @@ import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import pty from '@lydell/node-pty';
 import type { WebSocket as WS } from 'ws';
 import { WebSocketServer } from 'ws';
+
+interface PtyProcess {
+  onData(cb: (data: string) => void): void;
+  onExit(cb: (e: { exitCode: number }) => void): void;
+  write(data: string): void;
+  resize(cols: number, rows: number): void;
+  kill(): void;
+}
+
+function spawnPty(shell: string, cols: number, rows: number): PtyProcess {
+  if (process.versions.bun) {
+    const proc = Bun.spawn([shell], {
+      terminal: {
+        cols,
+        rows,
+        data(_term: unknown, data: Uint8Array) {
+          onDataCb?.(Buffer.from(data).toString('utf8'));
+        },
+      },
+      cwd: homedir(),
+      env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+    });
+
+    let onDataCb: ((data: string) => void) | undefined;
+
+    proc.exited.then((exitCode) => {
+      onExitCb?.({ exitCode: exitCode ?? 0 });
+    });
+
+    let onExitCb: ((e: { exitCode: number }) => void) | undefined;
+
+    return {
+      onData(cb) {
+        onDataCb = cb;
+      },
+      onExit(cb) {
+        onExitCb = cb;
+      },
+      write(data) {
+        proc.terminal?.write(data);
+      },
+      resize(c, r) {
+        proc.terminal?.resize(c, r);
+      },
+      kill() {
+        proc.kill();
+      },
+    };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const nodePty = require('@lydell/node-pty') as typeof import('@lydell/node-pty');
+  const ptyProc = nodePty.spawn(shell, [], {
+    name: 'xterm-256color',
+    cols,
+    rows,
+    cwd: homedir(),
+    env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+  });
+
+  return {
+    onData(cb) {
+      ptyProc.onData(cb);
+    },
+    onExit(cb) {
+      ptyProc.onExit(cb);
+    },
+    write(data) {
+      ptyProc.write(data);
+    },
+    resize(c, r) {
+      ptyProc.resize(c, r);
+    },
+    kill() {
+      ptyProc.kill();
+    },
+  };
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -312,7 +389,7 @@ function serveFile(filePath: string, res: http.ServerResponse): void {
   });
 }
 
-const sessions = new Map<WS, { pty: ReturnType<typeof pty.spawn> }>();
+const sessions = new Map<WS, { pty: PtyProcess }>();
 
 function getShell(): string {
   if (process.platform === 'win32') {
@@ -321,14 +398,8 @@ function getShell(): string {
   return process.env.SHELL ?? '/bin/bash';
 }
 
-function createPtySession(cols: number, rows: number) {
-  return pty.spawn(getShell(), [], {
-    name: 'xterm-256color',
-    cols,
-    rows,
-    cwd: homedir(),
-    env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
-  });
+function createPtySession(cols: number, rows: number): PtyProcess {
+  return spawnPty(getShell(), cols, rows);
 }
 
 const wss = new WebSocketServer({ noServer: true });
@@ -354,7 +425,7 @@ wss.on('connection', (ws: WS, req: http.IncomingMessage) => {
     if (ws.readyState === ws.OPEN) ws.send(data, { binary: false });
   });
 
-  ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
+  ptyProcess.onExit(({ exitCode }) => {
     if (ws.readyState === ws.OPEN) {
       ws.send(`\r\n\x1b[33mShell exited (code: ${exitCode})\x1b[0m\r\n`);
       ws.close();
