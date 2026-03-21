@@ -40,8 +40,7 @@ const HTML = `<!doctype html>
   <body>
     <div id="terminal"></div>
     <script type="module">
-      import { init, Terminal } from '/dist/ghostty-web.js';
-      import { FitAddon } from '/dist/ghostty-web.js';
+      import { init, Terminal, FitAddon } from '/dist/ghostty-web.js';
 
       await init();
 
@@ -76,7 +75,7 @@ const HTML = `<!doctype html>
 
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
-      term.open(document.getElementById('terminal'));
+      await term.open(document.getElementById('terminal'));
       fitAddon.fit();
       fitAddon.observeResize();
       window.addEventListener('resize', () => fitAddon.fit());
