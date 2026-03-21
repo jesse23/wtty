@@ -11,34 +11,44 @@ import { WebSocketServer } from 'ws';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = Number(process.env.PORT) || 2346;
+const HTTP_PORT = Number(process.env.PORT) || 2346;
 
 const require = createRequire(import.meta.url);
-const ghosttyWebMain = require.resolve('ghostty-web') as string;
-const ghosttyWebRoot = ghosttyWebMain.replace(/[/\\]dist[/\\].*$/, '');
-const distPath = path.join(ghosttyWebRoot, 'dist');
-const wasmPath = path.join(ghosttyWebRoot, 'ghostty-vt.wasm');
 
-const MIME: Record<string, string> = {
-  '.html': 'text/html',
-  '.js': 'application/javascript',
-  '.mjs': 'application/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.wasm': 'application/wasm',
-};
+function findGhosttyWeb(): { distPath: string; wasmPath: string } {
+  try {
+    const ghosttyWebMain = require.resolve('ghostty-web') as string;
+    const ghosttyWebRoot = ghosttyWebMain.replace(/[/\\]dist[/\\].*$/, '');
+    const distPath = path.join(ghosttyWebRoot, 'dist');
+    const wasmPath = path.join(ghosttyWebRoot, 'ghostty-vt.wasm');
+    if (fs.existsSync(path.join(distPath, 'ghostty-web.js')) && fs.existsSync(wasmPath)) {
+      return { distPath, wasmPath };
+    }
+  } catch {
+    // fall through
+  }
+  console.error('Error: Could not find ghostty-web package.');
+  process.exit(1);
+}
 
-const HTML = `<!doctype html>
+const { distPath, wasmPath } = findGhosttyWeb();
+
+const HTML_TEMPLATE = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>wtty</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
       body {
-        background: #282A36;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         min-height: 100vh;
         display: flex;
         align-items: center;
@@ -48,15 +58,15 @@ const HTML = `<!doctype html>
 
       .terminal-window {
         width: 100%;
-        max-width: 1200px;
-        background: #282A36;
+        max-width: 1000px;
+        background: #1e1e1e;
         border-radius: 12px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         overflow: hidden;
       }
 
       .title-bar {
-        background: #21222C;
+        background: #2d2d2d;
         padding: 12px 16px;
         display: flex;
         align-items: center;
@@ -64,45 +74,69 @@ const HTML = `<!doctype html>
         border-bottom: 1px solid #1a1a1a;
       }
 
-      .traffic-lights { display: flex; gap: 8px; }
-      .light { width: 12px; height: 12px; border-radius: 50%; }
-      .light.red    { background: #ff5f56; }
-      .light.yellow { background: #ffbd2e; }
-      .light.green  { background: #27c93f; }
+      .traffic-lights {
+        display: flex;
+        gap: 8px;
+      }
 
-      .title { color: #F8F8F2; font-size: 13px; font-weight: 500; }
+      .light {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .light.red { background: #ff5f56; }
+      .light.yellow { background: #ffbd2e; }
+      .light.green { background: #27c93f; }
+
+      .title {
+        color: #e5e5e5;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+      }
 
       .connection-status {
         margin-left: auto;
         font-size: 11px;
-        color: #6272A4;
+        color: #888;
         display: flex;
         align-items: center;
         gap: 6px;
       }
 
-      .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #6272A4; }
-      .status-dot.connected    { background: #50FA7B; }
-      .status-dot.disconnected { background: #FF5555; }
-      .status-dot.connecting   { background: #F1FA8C; animation: pulse 1s infinite; }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #888;
+      }
+
+      .status-dot.connected { background: #27c93f; }
+      .status-dot.disconnected { background: #ff5f56; }
+      .status-dot.connecting { background: #ffbd2e; animation: pulse 1s infinite; }
 
       @keyframes pulse {
         0%, 100% { opacity: 1; }
-        50%       { opacity: 0.5; }
+        50% { opacity: 0.5; }
       }
 
       .terminal-content {
         height: 600px;
         padding: 16px;
-        background: #282A36;
+        background: #1e1e1e;
         position: relative;
         overflow: hidden;
       }
 
-      .terminal-content canvas { display: block; }
+      .terminal-content canvas {
+        display: block;
+      }
 
       @media (max-width: 768px) {
-        .terminal-content { height: 500px; }
+        .terminal-content {
+          height: 500px;
+        }
       }
     </style>
   </head>
@@ -127,35 +161,14 @@ const HTML = `<!doctype html>
       import { init, Terminal, FitAddon } from '/dist/ghostty-web.js';
 
       await init();
-
       const term = new Terminal({
         cols: 80,
         rows: 24,
-        cursorBlink: true,
+        fontFamily: 'JetBrains Mono, Menlo, Monaco, monospace',
         fontSize: 14,
-        fontFamily: "'FiraMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",
-        scrollback: 10000,
         theme: {
-          background:   '#282A36',
-          foreground:   '#F8F8F2',
-          cursor:       '#F8F8F2',
-          selection:    '#44475A',
-          black:        '#21222C',
-          red:          '#FF5555',
-          green:        '#50FA7B',
-          yellow:       '#F1FA8C',
-          blue:         '#BD93F9',
-          purple:       '#FF79C6',
-          cyan:         '#8BE9FD',
-          white:        '#F8F8F2',
-          brightBlack:  '#6272A4',
-          brightRed:    '#FF6E6E',
-          brightGreen:  '#69FF94',
-          brightYellow: '#FFFFA5',
-          brightBlue:   '#D6ACFF',
-          brightPurple: '#FF92DF',
-          brightCyan:   '#A4FFFF',
-          brightWhite:  '#FFFFFF',
+          background: '#1e1e1e',
+          foreground: '#d4d4d4',
         },
       });
 
@@ -167,8 +180,9 @@ const HTML = `<!doctype html>
       fitAddon.fit();
       fitAddon.observeResize();
 
-      const statusDot  = document.getElementById('status-dot');
+      const statusDot = document.getElementById('status-dot');
       const statusText = document.getElementById('status-text');
+
       function setStatus(status, text) {
         statusDot.className = 'status-dot ' + status;
         statusText.textContent = text;
@@ -181,44 +195,64 @@ const HTML = `<!doctype html>
       function connect() {
         setStatus('connecting', 'Connecting...');
         ws = new WebSocket(wsUrl);
-        ws.onopen  = () => setStatus('connected', 'Connected');
-        ws.onmessage = (e) => term.write(e.data);
-        ws.onerror = () => setStatus('disconnected', 'Error');
+
+        ws.onopen = () => {
+          setStatus('connected', 'Connected');
+        };
+
+        ws.onmessage = (event) => {
+          term.write(event.data);
+        };
+
         ws.onclose = () => {
           setStatus('disconnected', 'Disconnected');
           term.write('\\r\\n\\x1b[31mConnection closed. Reconnecting in 2s...\\x1b[0m\\r\\n');
           setTimeout(connect, 2000);
         };
-      }
 
-      term.onData((data) => { if (ws?.readyState === WebSocket.OPEN) ws.send(data); });
-      term.onResize(({ cols, rows }) => {
-        if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'resize', cols, rows }));
-      });
+        ws.onerror = () => {
+          setStatus('disconnected', 'Error');
+        };
+      }
 
       connect();
 
-      window.addEventListener('resize', () => fitAddon.fit());
+      term.onData((data) => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(data);
+        }
+      });
+
+      term.onResize(({ cols, rows }) => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'resize', cols, rows }));
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        fitAddon.fit();
+      });
 
       if (window.visualViewport) {
         const terminalContent = document.querySelector('.terminal-content');
-        const terminalWindow  = document.querySelector('.terminal-window');
-        const originalHeight  = terminalContent.style.height;
+        const terminalWindow = document.querySelector('.terminal-window');
+        const originalHeight = terminalContent.style.height;
+        const body = document.body;
 
         window.visualViewport.addEventListener('resize', () => {
           const keyboardHeight = window.innerHeight - window.visualViewport.height;
           if (keyboardHeight > 100) {
-            document.body.style.padding = '0';
-            document.body.style.alignItems = 'flex-start';
+            body.style.padding = '0';
+            body.style.alignItems = 'flex-start';
             terminalWindow.style.borderRadius = '0';
             terminalWindow.style.maxWidth = '100%';
             terminalContent.style.height = (window.visualViewport.height - 60) + 'px';
             window.scrollTo(0, 0);
           } else {
-            document.body.style.padding = '40px 20px';
-            document.body.style.alignItems = 'center';
+            body.style.padding = '40px 20px';
+            body.style.alignItems = 'center';
             terminalWindow.style.borderRadius = '12px';
-            terminalWindow.style.maxWidth = '1200px';
+            terminalWindow.style.maxWidth = '1000px';
             terminalContent.style.height = originalHeight || '600px';
           }
           fitAddon.fit();
@@ -228,9 +262,45 @@ const HTML = `<!doctype html>
   </body>
 </html>`;
 
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.mjs': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.wasm': 'application/wasm',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+};
+
+const httpServer = http.createServer((req, res) => {
+  const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
+  const pathname = url.pathname;
+
+  if (pathname === '/' || pathname === '/index.html') {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(HTML_TEMPLATE);
+    return;
+  }
+
+  if (pathname.startsWith('/dist/')) {
+    serveFile(path.join(distPath, pathname.slice(6)), res);
+    return;
+  }
+
+  if (pathname === '/ghostty-vt.wasm') {
+    serveFile(wasmPath, res);
+    return;
+  }
+
+  res.writeHead(404);
+  res.end('Not Found');
+});
+
 function serveFile(filePath: string, res: http.ServerResponse): void {
   const ext = path.extname(filePath);
-  const contentType = MIME[ext] ?? 'application/octet-stream';
+  const contentType = MIME_TYPES[ext] ?? 'application/octet-stream';
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404);
@@ -242,41 +312,28 @@ function serveFile(filePath: string, res: http.ServerResponse): void {
   });
 }
 
-const server = http.createServer((req, res) => {
-  const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
-  const { pathname } = url;
-
-  if (pathname === '/' || pathname === '/index.html') {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(HTML);
-    return;
-  }
-  if (pathname.startsWith('/dist/')) {
-    serveFile(path.join(distPath, pathname.slice(6)), res);
-    return;
-  }
-  if (pathname === '/ghostty-vt.wasm') {
-    serveFile(wasmPath, res);
-    return;
-  }
-  res.writeHead(404);
-  res.end('Not Found');
-});
+const sessions = new Map<WS, { pty: ReturnType<typeof pty.spawn> }>();
 
 function getShell(): string {
-  return process.platform === 'win32'
-    ? (process.env.COMSPEC ?? 'cmd.exe')
-    : (process.env.SHELL ?? '/bin/bash');
+  if (process.platform === 'win32') {
+    return process.env.COMSPEC ?? 'cmd.exe';
+  }
+  return process.env.SHELL ?? '/bin/bash';
 }
 
-interface Session {
-  pty: ReturnType<typeof pty.spawn>;
+function createPtySession(cols: number, rows: number) {
+  return pty.spawn(getShell(), [], {
+    name: 'xterm-256color',
+    cols,
+    rows,
+    cwd: homedir(),
+    env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+  });
 }
 
 const wss = new WebSocketServer({ noServer: true });
-const sessions = new Map<WS, Session>();
 
-server.on('upgrade', (req, socket, head) => {
+httpServer.on('upgrade', (req, socket, head) => {
   const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
   if (url.pathname === '/ws') {
     wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
@@ -290,14 +347,7 @@ wss.on('connection', (ws: WS, req: http.IncomingMessage) => {
   const cols = Number.parseInt(url.searchParams.get('cols') ?? '80', 10);
   const rows = Number.parseInt(url.searchParams.get('rows') ?? '24', 10);
 
-  const ptyProcess = pty.spawn(getShell(), [], {
-    name: 'xterm-256color',
-    cols,
-    rows,
-    cwd: homedir(),
-    env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
-  });
-
+  const ptyProcess = createPtySession(cols, rows);
   sessions.set(ws, { pty: ptyProcess });
 
   ptyProcess.onData((data: string) => {
@@ -312,36 +362,54 @@ wss.on('connection', (ws: WS, req: http.IncomingMessage) => {
   });
 
   ws.on('message', (data: Buffer) => {
-    const msg = data.toString('utf8');
-    if (msg.startsWith('{')) {
+    const message = data.toString('utf8');
+    if (message.startsWith('{')) {
       try {
-        const parsed = JSON.parse(msg) as { type: string; cols: number; rows: number };
-        if (parsed.type === 'resize') {
-          ptyProcess.resize(parsed.cols, parsed.rows);
+        const msg = JSON.parse(message) as { type: string; cols: number; rows: number };
+        if (msg.type === 'resize') {
+          ptyProcess.resize(msg.cols, msg.rows);
           return;
         }
       } catch {
         // fall through
       }
     }
-    ptyProcess.write(msg);
+    ptyProcess.write(message);
   });
 
   ws.on('close', () => {
     sessions.get(ws)?.pty.kill();
     sessions.delete(ws);
   });
+
   ws.on('error', () => {});
+
+  const C = '\x1b[1;36m';
+  const G = '\x1b[1;32m';
+  const Y = '\x1b[1;33m';
+  const R = '\x1b[0m';
+  ws.send(`${C}╔══════════════════════════════════════════════════════════════╗${R}\r\n`);
+  ws.send(
+    `${C}║${R}  ${G}Welcome to wtty!${R}                                            ${C}║${R}\r\n`,
+  );
+  ws.send(`${C}║${R}                                                              ${C}║${R}\r\n`);
+  ws.send(`${C}║${R}  You have a real shell session with full PTY support.        ${C}║${R}\r\n`);
+  ws.send(
+    `${C}║${R}  Try: ${Y}ls${R}, ${Y}cd${R}, ${Y}top${R}, ${Y}vim${R}, or any command!                      ${C}║${R}\r\n`,
+  );
+  ws.send(`${C}╚══════════════════════════════════════════════════════════════╝${R}\r\n\r\n`);
 });
 
 process.on('SIGINT', () => {
-  for (const [ws, { pty: p }] of sessions) {
-    p.kill();
+  console.log('\n\nShutting down...');
+  for (const [ws, session] of sessions.entries()) {
+    session.pty.kill();
     ws.close();
   }
+  wss.close();
   process.exit(0);
 });
 
-server.listen(PORT, () => {
-  console.log(`wtty listening on http://localhost:${PORT}`);
+httpServer.listen(HTTP_PORT, () => {
+  console.log(`wtty listening on http://localhost:${HTTP_PORT}`);
 });
