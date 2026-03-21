@@ -191,12 +191,12 @@ const HTML = `<!doctype html>
         };
       }
 
-      connect();
-
       term.onData((data) => { if (ws?.readyState === WebSocket.OPEN) ws.send(data); });
       term.onResize(({ cols, rows }) => {
         if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'resize', cols, rows }));
       });
+
+      connect();
 
       window.addEventListener('resize', () => fitAddon.fit());
 
