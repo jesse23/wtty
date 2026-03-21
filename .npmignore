@@ -1,0 +1,16 @@
+# source
+src/
+scripts/
+
+# config
+tsconfig*.json
+biome.json
+.releaserc.json
+Makefile
+
+# docs
+docs/
+
+# misc
+.github/
+.agents/

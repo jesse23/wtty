@@ -4,7 +4,7 @@
 
 ## Overview
 
-Automated release pipeline for wtty using semantic-release. Conventional commit prefixes in PR titles drive version bumps post-merge to `main`. semantic-release determines the version, creates a GitHub Release with release notes, and pushes a git tag. No manual versioning, no release commits, no extra files. Git tags are the sole version record.
+Automated release pipeline for wtty using semantic-release. Conventional commit prefixes in PR titles drive version bumps post-merge to `main`. semantic-release determines the version, publishes to npm, creates a GitHub Release with release notes, and pushes a git tag. No manual versioning, no release commits, no extra files. Git tags are the sole version record.
 
 wtty targets developers who already have Node.js or Bun installed. Distribution is via `npx wtty` — no binary downloads needed.
 
@@ -39,6 +39,7 @@ PR                                   Post-Merge (main)
    - `feat:` → minor bump (`0.1.0` → `0.2.0`)
    - `feat!:` / `BREAKING CHANGE:` → major bump (`0.1.0` → `1.0.0`)
    - `chore:`, `docs:`, `ci:` → no release
+5. npm package published, GitHub Release created with tag and release notes
 
 ### Conventional Commit Prefixes
 
@@ -81,7 +82,12 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bunx semantic-release
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: bunx clean-publish
 ```
 
 ## Configuration
@@ -95,6 +101,7 @@ jobs:
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
+    "@semantic-release/npm",
     "@semantic-release/github"
   ]
 }
@@ -116,10 +123,12 @@ main branch:
 |---------|-------|-----|
 | Squash merging | Enabled | PR title becomes the commit message semantic-release reads |
 | Workflow permissions | Read and write | `GITHUB_TOKEN` needs to push tags and create releases |
+| `NPM_TOKEN` secret | npm Automation token | Settings → Secrets → Actions. Generate from npmjs.com → Access Tokens → Automation token. |
 
 ## Features
 
 | Feature | Status | Reference |
 |---------|--------|-----------|
 | Automated versioning via conventional commits | ⬜ | [ADR 003](../adrs/003.release-process.semantic-release.md) |
+| npm publish on release | ⬜ | [ADR 003](../adrs/003.release-process.semantic-release.md) |
 | GitHub Release with release notes | ⬜ | [ADR 003](../adrs/003.release-process.semantic-release.md) |
