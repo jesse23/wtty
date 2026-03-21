@@ -14,9 +14,9 @@
     "clean": "rimraf dist node_modules"
   },
   "dependencies": {
-    "@lydell/node-pty": "1.2.0-beta.3",
-    "ghostty-web": "0.4.0-next.14.g6a1a50d",
-    "ws": "8.19.0"
+    "@lydell/node-pty": "1.1.0",
+    "ghostty-web": "0.2.1",
+    "ws": "8.18.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.4",
