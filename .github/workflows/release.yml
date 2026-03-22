@@ -16,6 +16,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - run: apt-get update && apt-get install -y --no-install-recommends git
       - run: bun install --frozen-lockfile
       - run: bun run build
       - name: Release
