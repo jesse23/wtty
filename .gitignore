@@ -11,6 +11,7 @@ dist/
 
 # npm publish artifacts
 *.tgz
+package.json.publish-backup
 
 # Logs
 *.log

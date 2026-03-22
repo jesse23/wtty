@@ -8,6 +8,9 @@ biome.json
 .releaserc.json
 Makefile
 
+# publish backup
+package.json.publish-backup
+
 # docs
 docs/
 
