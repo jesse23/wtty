@@ -7,7 +7,7 @@
 
 ## Description
 
-The wtty web UI is served by the wtty server and runs entirely in the browser. It has two surfaces: a terminal view (full-viewport, one session per tab) and a session manager (list, create, open, kill sessions, and control the server).
+The webtty web UI is served by the webtty server and runs entirely in the browser. It has two surfaces: a terminal view (full-viewport, one session per tab) and a session manager (list, create, open, kill sessions, and control the server).
 
 The UI has no build step in the initial slices — plain HTML + `<script type="module">` importing `ghostty-web` assets served by the server itself. A bundler can be introduced later if the UI grows beyond a handful of files.
 
