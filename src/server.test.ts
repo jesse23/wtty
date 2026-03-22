@@ -30,13 +30,26 @@ async function waitForServer(baseUrl: string, timeout = 3000): Promise<void> {
   throw new Error('Server did not start in time');
 }
 
+async function waitForServerDown(baseUrl: string, timeout = 3000): Promise<void> {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      await fetch(`${baseUrl}/`);
+      await Bun.sleep(100);
+    } catch {
+      return;
+    }
+  }
+  throw new Error('Server did not shut down in time');
+}
+
 describe('server', () => {
   let proc: ChildProcess;
   let baseUrl: string;
 
   beforeAll(async () => {
     const port = await getFreePort();
-    baseUrl = `http://localhost:${port}`;
+    baseUrl = `http://127.0.0.1:${port}`;
     proc = spawn(process.execPath, [SERVER_ENTRY], {
       env: { ...process.env, PORT: String(port) },
       stdio: 'ignore',
@@ -67,7 +80,7 @@ describe('server', () => {
     const body = await res.text();
     expect(body).toBe('stopping');
 
-    await Bun.sleep(200);
+    await waitForServerDown(baseUrl);
 
     await expect(fetch(`${baseUrl}/`)).rejects.toThrow();
   });

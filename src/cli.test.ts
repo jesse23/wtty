@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -46,17 +46,33 @@ async function waitForServer(baseUrl: string, timeout = 3000): Promise<boolean> 
   return false;
 }
 
+async function waitForServerDown(baseUrl: string, timeout = 3000): Promise<void> {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      await fetch(`${baseUrl}/`);
+      await Bun.sleep(100);
+    } catch {
+      return;
+    }
+  }
+  throw new Error('Server did not shut down in time');
+}
+
 describe('cli', () => {
   let port: number;
   let baseUrl: string;
+
+  beforeAll(async () => {
+    port = await getFreePort();
+    baseUrl = `http://127.0.0.1:${port}`;
+  });
 
   afterAll(async () => {
     await fetch(`${baseUrl}/api/server/stop`, { method: 'POST' }).catch(() => {});
   });
 
   test('unknown command exits with error', async () => {
-    port = await getFreePort();
-    baseUrl = `http://localhost:${port}`;
     const { stderr, exitCode } = await runCli(port, 'unknown');
     expect(exitCode).toBe(1);
     expect(stderr).toContain('Usage');
@@ -74,7 +90,7 @@ describe('cli', () => {
     const { stdout, exitCode } = await runCli(port, 'stop');
     expect(exitCode).toBe(0);
     expect(stdout).toBe('wtty stopped');
-    await Bun.sleep(200);
+    await waitForServerDown(baseUrl);
     await expect(fetch(`${baseUrl}/`)).rejects.toThrow();
   });
 
