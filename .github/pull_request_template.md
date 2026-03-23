@@ -4,5 +4,5 @@
 
 ## ADRs
 
-<!-- List any ADRs introduced or implemented by this PR. Remove if not applicable. -->
-- 
+<!-- List any ADRs introduced or implemented by this PR. Omit this section for infra/chore changes. -->
+-
