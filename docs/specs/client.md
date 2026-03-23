@@ -1,7 +1,7 @@
 # SPEC: Client
 
 **Author:** jesse23
-**Last Updated:** 2026-03-22
+**Last Updated:** 2026-03-23
 
 ---
 
@@ -14,6 +14,19 @@ The client has no build step in the initial slices — plain HTML + `<script typ
 **Why ghostty-web over xterm.js?** ghostty-web is the reference implementation for this project, already available locally, and shares the same `Terminal` / `FitAddon` API shape as xterm.js. xterm.js is the safer long-term bet (wider ecosystem, VS Code backing) but ghostty-web is sufficient for the initial slices and avoids an early dependency decision.
 
 **Why no framework (React/Vue) yet?** The session manager is simple enough (a table + buttons) that a framework adds more complexity than it removes. Revisit when the client grows.
+
+## Behavior Notes
+
+### Tab close on session end
+
+When a session ends (shell exits → WS close code `4001`) or the server stops (`webtty stop` / SIGINT → WS close code `1001`), the client calls `window.close()` after 500 ms to close the tab automatically.
+
+**Browser restriction**: `window.close()` is only permitted on tabs that were opened programmatically via `window.open()`, or duplicated from such a tab. Tabs opened by the OS (`open`/`xdg-open`) or by the user typing a URL directly are treated as unowned — `window.close()` is silently ignored. In practice:
+
+- Tabs opened by `webtty run` and tabs duplicated from them → close automatically ✅
+- Tabs opened by manually navigating to the server URL → display "Session removed." or "Server stopped." but remain open ⚠️
+
+This is a browser-enforced security restriction with no JS workaround.
 
 ## Features
 
