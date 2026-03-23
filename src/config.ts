@@ -86,8 +86,14 @@ export const DEFAULT_CONFIG: Config = {
 
 export function loadConfig(): Config {
   if (!fs.existsSync(CONFIG_PATH)) {
-    saveConfig(DEFAULT_CONFIG);
-    return { ...DEFAULT_CONFIG };
+    try {
+      saveConfig(DEFAULT_CONFIG);
+    } catch (err) {
+      console.warn(
+        `webtty: failed to write default config to ${CONFIG_PATH}: ${(err as Error).message}`,
+      );
+      return { ...DEFAULT_CONFIG };
+    }
   }
 
   let raw: string;
