@@ -467,14 +467,10 @@ wss.on('connection', (ws: WS, req: http.IncomingMessage) => {
       }
     });
 
-    session.pty.onExit(({ exitCode }) => {
+    session.pty.onExit(() => {
+      sessionRegistry.delete(session.id);
       if (session.ws && session.ws.readyState === session.ws.OPEN) {
-        if (sessionRegistry.has(session.id)) {
-          session.ws.send(`\r\n\x1b[33mShell exited (code: ${exitCode})\x1b[0m\r\n`);
-          session.ws.close();
-        } else {
-          session.ws.close(4001, 'session deleted');
-        }
+        session.ws.close(4001, 'shell exited');
       }
       session.pty = null;
     });
