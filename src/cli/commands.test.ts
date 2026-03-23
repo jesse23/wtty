@@ -5,8 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CLI_ENTRY = path.resolve(__dirname, 'cli.ts');
-const SERVER_ENTRY = path.resolve(__dirname, 'server.ts');
+const CLI_ENTRY = path.resolve(__dirname, 'index.ts');
+const SERVER_ENTRY = path.resolve(__dirname, '../server/index.ts');
 
 function getFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {

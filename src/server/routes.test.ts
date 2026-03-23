@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SERVER_ENTRY = path.resolve(__dirname, 'server.ts');
+const SERVER_ENTRY = path.resolve(__dirname, 'index.ts');
 
 function getFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -43,7 +43,7 @@ async function waitForServerDown(baseUrl: string, timeout = 3000): Promise<void>
   throw new Error('Server did not shut down in time');
 }
 
-describe('server', () => {
+describe('server — routes', () => {
   let proc: ChildProcess;
   let baseUrl: string;
 
