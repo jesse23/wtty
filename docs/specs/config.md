@@ -7,14 +7,14 @@
 
 ## Description
 
-webtty reads configuration from `~/.config/webtty/config.json`. The file is the single source of truth for persistent user preferences. Environment variables override config file values at runtime but never modify the file.
+webtty reads configuration from `~/.config/webtty/config.jsonc`. The file supports comments (JSONC format via `strip-json-comments`). It is the single source of truth for persistent user preferences. Environment variables override config file values at runtime but never modify the file.
 
 ## File location
 
 | Platform | Path |
 |----------|------|
-| macOS / Linux | `~/.config/webtty/config.json` |
-| Windows | `%USERPROFILE%\.config\webtty\config.json` |
+| macOS / Linux | `~/.config/webtty/config.jsonc` |
+| Windows | `%USERPROFILE%\.config\webtty\config.jsonc` |
 
 ## Lifecycle
 
@@ -57,25 +57,37 @@ config ready
 ```jsonc
 {
   // Server
-  "port": 2346,                 // HTTP listen port; env PORT takes precedence
+  // HTTP listen port; env PORT takes precedence
+  "port": 2346,
+  // Bind address; use "0.0.0.0" for remote access
+  "host": "127.0.0.1",
 
   // Shell
-  "shell": "/bin/zsh",          // shell for new sessions; default: $SHELL on Unix, %COMSPEC% on Windows
+  // Shell for new sessions; defaults to $SHELL / %COMSPEC% if omitted
+  // "shell": "/bin/zsh",
+  // $TERM env var passed to the shell
+  // "term": "xterm-256color",
 
   // Terminal
-  "cols": 80,                   // initial terminal width in columns
-  "rows": 24,                   // initial terminal height in rows
-  "scrollback": 262144,         // PTY history buffer in bytes (256 KB); used for server-side replay on reload/reconnect
-  "cursorBlink": true,          // whether the cursor blinks
-  "fontSize": 14,               // font size in px
-  "fontFamily": "'FiraMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",  // CSS font-family stack
+  // PTY history buffer in bytes (256 KB); used for server-side replay on reload/reconnect
+  // "scrollback": 262144,
+  // Initial terminal width in columns
+  // "cols": 80,
+  // Initial terminal height in rows
+  // "rows": 24,
+  // Whether the cursor blinks
+  // "cursorBlink": true,
+  // Font size in px
+  // "fontSize": 14,
+  // CSS font-family stack
+  // "fontFamily": "'FiraMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",
 
   // Theme — Dracula by default; any hex color values accepted
-  "theme": {
-    "background":   "#282A36",
-    "foreground":   "#F8F8F2",
-    // ... all 16 ANSI colors + cursor + selection
-  }
+  // "theme": {
+  //   "background": "#282A36",
+  //   "foreground": "#F8F8F2",
+  //   // ... all 16 ANSI colors + cursor + selection
+  // }
 }
 ```
 
