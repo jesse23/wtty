@@ -15,6 +15,7 @@ package.json.bak
 
 # Logs
 *.log
+lcov.info
 
 # AI tooling (local-only agent state)
 .agents/
