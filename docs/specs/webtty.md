@@ -86,6 +86,6 @@ Session IDs appear directly in the URL path (`/s/:id`), so they must be valid UR
 | Config file | Load shell, port, font, theme from a config file (`~/.webtty/config.json`) | — | ⬜ |
 | In-memory registry | Server-side map of `id → { session, pty }`; sessions survive WS disconnect, not server restart | — | ⬜ |
 | Default session | `GET /` redirects to last-used session, or creates `main` and redirects if none exists | — | ✅ |
-| Session URL | `GET /s/:id` — serves SPA shell for the named session; reconnects if session already has a PTY | — | ✅ |
+| Session URL | `GET /s/:id` — serves browser client for the named session; reconnects if session already has a PTY | — | ✅ |
 | Session management | CRUD + rename over HTTP — see REST API above | [ADR 004](../adrs/004.webtty.session-api.md) | ✅ |
 | Session client | Multiple browser tabs can attach to the same session simultaneously; reload replays scrollback; typing `exit` closes all tabs | [ADR 007](../adrs/007.webtty.session-client.md) | ✅ |

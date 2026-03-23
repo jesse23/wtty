@@ -1,4 +1,4 @@
-export function spaShell(sessionId: string): string {
+export function render(sessionId: string): string {
   return `<!doctype html>
 <html lang="en">
   <head>

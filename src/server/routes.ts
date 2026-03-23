@@ -1,5 +1,6 @@
 import type http from 'node:http';
 import path from 'node:path';
+import { render } from './client';
 import {
   createSession,
   generateId,
@@ -9,7 +10,6 @@ import {
   sessionToJson,
   setLastUsedId,
 } from './session';
-import { spaShell } from './spa';
 import { serveFile } from './static';
 
 const MAX_BODY = 64 * 1024;
@@ -189,16 +189,16 @@ export async function handleRequest(
     return;
   }
 
-  const spaMatch = pathname.match(/^\/s\/([^/]+)$/);
-  if (req.method === 'GET' && spaMatch) {
-    const id = decodeId(spaMatch[1]);
+  const clientMatch = pathname.match(/^\/s\/([^/]+)$/);
+  if (req.method === 'GET' && clientMatch) {
+    const id = decodeId(clientMatch[1]);
     if (!id || !isValidId(id) || !sessionRegistry.has(id)) {
       res.writeHead(404);
       res.end('Not Found');
       return;
     }
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(spaShell(id));
+    res.end(render(id));
     return;
   }
 
