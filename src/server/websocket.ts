@@ -69,7 +69,7 @@ export function createWebSocketServer(httpServer: http.Server): WebSocketServer 
       const R = '\x1b[0m';
       const banner = [
         `${C}╔══════════════════════════════════════════════════════════════╗${R}\r\n`,
-        `${C}║${R}  ${G}Welcome to webtty!${R}                                            ${C}║${R}\r\n`,
+        `${C}║${R}  ${G}Welcome to webtty!${R}                                          ${C}║${R}\r\n`,
         `${C}║${R}                                                              ${C}║${R}\r\n`,
         `${C}║${R}  You have a real shell session with full PTY support.        ${C}║${R}\r\n`,
         `${C}║${R}  Try: ${Y}ls${R}, ${Y}cd${R}, ${Y}top${R}, ${Y}vim${R}, or any command!                      ${C}║${R}\r\n`,
