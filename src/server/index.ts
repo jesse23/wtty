@@ -15,7 +15,12 @@ const httpServer = http.createServer((req, res) => {
       for (const client of session.clients) client.close(1001, 'server stopped');
     }
     wss.close();
-    httpServer.close(() => process.exit(0));
+    const exit = () => process.exit(0);
+    const shutdownTimeout = setTimeout(exit, 1000);
+    httpServer.close(() => {
+      clearTimeout(shutdownTimeout);
+      exit();
+    });
   });
 });
 
