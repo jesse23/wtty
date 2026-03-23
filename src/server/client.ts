@@ -1,4 +1,8 @@
-export function render(sessionId: string): string {
+import type { Config } from '../config';
+
+export function render(sessionId: string, config: Config): string {
+  const theme = config.theme;
+  const themeJson = JSON.stringify(theme, null, 8).replace(/^/gm, '        ').trimStart();
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -8,7 +12,7 @@ export function render(sessionId: string): string {
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
 
-      html, body, #terminal { width: 100%; height: 100%; overflow: hidden; background: #282A36; }
+      html, body, #terminal { width: 100%; height: 100%; overflow: hidden; background: ${theme.background ?? '#282A36'}; }
 
       #terminal canvas { display: block; }
     </style>
@@ -21,34 +25,13 @@ export function render(sessionId: string): string {
 
       await init();
       const term = new Terminal({
-        cols: 80,
-        rows: 24,
-        cursorBlink: true,
-        fontSize: 14,
-        fontFamily: "'FiraMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",
-        scrollback: 10000,
-        theme: {
-          background:   '#282A36',
-          foreground:   '#F8F8F2',
-          cursor:       '#F8F8F2',
-          selection:    '#44475A',
-          black:        '#21222C',
-          red:          '#FF5555',
-          green:        '#50FA7B',
-          yellow:       '#F1FA8C',
-          blue:         '#BD93F9',
-          purple:       '#FF79C6',
-          cyan:         '#8BE9FD',
-          white:        '#F8F8F2',
-          brightBlack:  '#6272A4',
-          brightRed:    '#FF6E6E',
-          brightGreen:  '#69FF94',
-          brightYellow: '#FFFFA5',
-          brightBlue:   '#D6ACFF',
-          brightPurple: '#FF92DF',
-          brightCyan:   '#A4FFFF',
-          brightWhite:  '#FFFFFF',
-        },
+        cols: ${config.cols},
+        rows: ${config.rows},
+        cursorBlink: ${config.cursorBlink},
+        fontSize: ${config.fontSize},
+        fontFamily: ${JSON.stringify(config.fontFamily)},
+        scrollback: ${Math.ceil(config.scrollback / 80)},
+        theme: ${themeJson},
       });
 
       const fitAddon = new FitAddon();

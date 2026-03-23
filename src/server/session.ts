@@ -1,8 +1,6 @@
 import type { WebSocket as WS } from 'ws';
 import type { PtyProcess } from '../pty';
 
-export const SCROLLBACK_MAX = 256 * 1024;
-
 export interface Session {
   id: string;
   createdAt: number;

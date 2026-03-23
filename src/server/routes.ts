@@ -1,5 +1,6 @@
 import type http from 'node:http';
 import path from 'node:path';
+import type { Config } from '../config';
 import { render } from './client';
 import {
   createSession,
@@ -48,6 +49,7 @@ export async function handleRequest(
   res: http.ServerResponse,
   distPath: string,
   wasmPath: string,
+  config: Config,
   onStop: () => void,
 ): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? '127.0.0.1'}`);
@@ -198,7 +200,7 @@ export async function handleRequest(
       return;
     }
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(render(id));
+    res.end(render(id, config));
     return;
   }
 

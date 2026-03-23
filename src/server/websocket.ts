@@ -1,10 +1,11 @@
 import type http from 'node:http';
 import type { WebSocket as WS } from 'ws';
 import { WebSocketServer } from 'ws';
+import type { Config } from '../config';
 import { spawnForSession } from '../pty';
-import { SCROLLBACK_MAX, sessionRegistry, setLastUsedId } from './session';
+import { sessionRegistry, setLastUsedId } from './session';
 
-export function createWebSocketServer(httpServer: http.Server): WebSocketServer {
+export function createWebSocketServer(httpServer: http.Server, config: Config): WebSocketServer {
   const wss = new WebSocketServer({ noServer: true });
 
   httpServer.on('upgrade', (req, socket, head) => {
@@ -54,10 +55,10 @@ export function createWebSocketServer(httpServer: http.Server): WebSocketServer 
     setLastUsedId(id);
 
     if (!session.pty) {
-      session.pty = spawnForSession(cols, rows);
+      session.pty = spawnForSession(cols, rows, config.shell, config.term, config.colorTerm);
 
       session.pty.onData((data: string) => {
-        session.scrollback = (session.scrollback + data).slice(-SCROLLBACK_MAX);
+        session.scrollback = (session.scrollback + data).slice(-config.scrollback);
         for (const client of session.clients) {
           if (client.readyState === client.OPEN) {
             client.send(data, { binary: false });

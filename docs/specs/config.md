@@ -112,4 +112,9 @@ config ready
 
 | Feature | Description | ADR | Done? |
 |---------|-------------|-----|-------|
-| Config lifecycle | First-run write + subsequent load, as described above | — | ⬜ |
+| Config lifecycle | First-run write + subsequent load, merge with defaults, env overrides | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
+| `port` / `host` | Override HTTP listen port and bind address | [ADR 008](../adrs/008.webtty.config.md) | ⬜ |
+| `shell` / `term` | Override shell and `$TERM` env var for new sessions | [ADR 008](../adrs/008.webtty.config.md) | ⬜ |
+| `scrollback` | PTY history buffer size in bytes | [ADR 008](../adrs/008.webtty.config.md) | ⬜ |
+| Terminal appearance | `cols`, `rows`, `fontSize`, `fontFamily`, `cursorBlink` injected into client HTML | [ADR 008](../adrs/008.webtty.config.md) | ⬜ |
+| `theme` | Terminal color palette injected into client HTML | [ADR 008](../adrs/008.webtty.config.md) | ⬜ |
