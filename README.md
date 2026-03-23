@@ -4,7 +4,7 @@ A web TTY for running CLI/TUI applications in a browser tab, across platforms.
 
 ## Debugging
 
-Build emits source maps (`dist/*.js.map`), so you can debug against the built output directly — no minification, original TypeScript line numbers preserved.
+Build emits source maps (`dist/**/*.js.map`), so you can debug against the built output directly — no minification, original TypeScript line numbers preserved.
 
 ```
 bun run build
