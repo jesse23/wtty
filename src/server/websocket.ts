@@ -31,8 +31,14 @@ export function createWebSocketServer(httpServer: http.Server): WebSocketServer 
       ws.close(1008, 'Bad Request');
       return;
     }
-    const cols = Number.parseInt(url.searchParams.get('cols') ?? '80', 10);
-    const rows = Number.parseInt(url.searchParams.get('rows') ?? '24', 10);
+    const cols = Math.max(
+      1,
+      Math.min(1000, Number.parseInt(url.searchParams.get('cols') ?? '80', 10) || 80),
+    );
+    const rows = Math.max(
+      1,
+      Math.min(500, Number.parseInt(url.searchParams.get('rows') ?? '24', 10) || 24),
+    );
 
     if (!sessionRegistry.has(id)) {
       ws.close(4001, 'session deleted');
@@ -97,7 +103,9 @@ export function createWebSocketServer(httpServer: http.Server): WebSocketServer 
         try {
           const msg = JSON.parse(message) as { type: string; cols: number; rows: number };
           if (msg.type === 'resize') {
-            session.pty?.resize(msg.cols, msg.rows);
+            const c = Math.max(1, Math.min(1000, Math.trunc(msg.cols) || 80));
+            const r = Math.max(1, Math.min(500, Math.trunc(msg.rows) || 24));
+            session.pty?.resize(c, r);
             return;
           }
         } catch {

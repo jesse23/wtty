@@ -68,7 +68,7 @@ export function registerCommands(program: Command): void {
 
       let sessionId: string;
       if (id) {
-        const check = await fetch(`${BASE_URL}/api/sessions/${id}`);
+        const check = await fetch(`${BASE_URL}/api/sessions/${encodeURIComponent(id)}`);
         if (check.status === 200) {
           sessionId = id;
         } else {
@@ -111,7 +111,9 @@ export function registerCommands(program: Command): void {
     .action(async (id: string) => {
       let res: Response;
       try {
-        res = await fetch(`${BASE_URL}/api/sessions/${id}`, { method: 'DELETE' });
+        res = await fetch(`${BASE_URL}/api/sessions/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
       } catch {
         console.log('webtty is not running');
         process.exit(1);
@@ -133,7 +135,7 @@ export function registerCommands(program: Command): void {
     .action(async (id: string, newId: string) => {
       let res: Response;
       try {
-        res = await fetch(`${BASE_URL}/api/sessions/${id}`, {
+        res = await fetch(`${BASE_URL}/api/sessions/${encodeURIComponent(id)}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: newId }),

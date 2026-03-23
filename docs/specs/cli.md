@@ -27,7 +27,7 @@ The CLI communicates with the server exclusively over HTTP to localhost — no U
 | `webtty run [id]` | Start server if not running; create session (auto-generates ID if omitted) or reuse if ID exists; open session URL in the default browser |
 | `webtty rm <id>` | `DELETE /api/sessions/:id` — kill session and its PTY |
 | `webtty rename <id> <new-id>` | `PATCH /api/sessions/:id` — rename a session; session URL updates to reflect new id |
-| `webtty restart` | Stop + start |
+| `webtty restart` | Stop + start | ⬜ not yet implemented |
 
 ## Features
 

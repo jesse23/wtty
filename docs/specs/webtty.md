@@ -21,7 +21,7 @@ The goal is the same as ttyd and GoTTY: zero client-side installation, full TUI 
 
 Sessions are PTY instances keyed by ID. Each session has a unique ID and a running PTY process. Sessions survive WebSocket disconnects but not server restarts (memory-only — webtty defers long-lived persistence to `tmux`/`screen`).
 
-New sessions use the shell from `~/.webtty/config.json`. No per-session command override.
+New sessions use the user's default shell from the environment (`$SHELL` on POSIX, `%COMSPEC%` on Windows). No per-session command override.
 
 ### Session data model
 
@@ -84,7 +84,7 @@ Session IDs appear directly in the URL path (`/s/:id`), so they must be valid UR
 |---------|-------------|-----|-------|
 | Bootstrap | Port `ghostty-web` demo into webtty — full-screen terminal in a browser tab, single server, hardcoded config | [001](../adrs/001.webtty.bootstrap.md) | ⬜ |
 | Config file | Load shell, port, font, theme from a config file (`~/.webtty/config.json`) | — | ⬜ |
-| In-memory registry | Server-side map of `id → { session, pty }`; sessions survive WS disconnect, not server restart | — | ⬜ |
+| In-memory registry | Server-side map of `id → { session, pty }`; sessions survive WS disconnect, not server restart | — | ✅ |
 | Default session | `GET /` redirects to last-used session, or creates `main` and redirects if none exists | — | ✅ |
 | Session URL | `GET /s/:id` — serves browser client for the named session; reconnects if session already has a PTY | — | ✅ |
 | Session management | CRUD + rename over HTTP — see REST API above | [ADR 004](../adrs/004.webtty.session-api.md) | ✅ |
