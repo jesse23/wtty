@@ -1,3 +1,6 @@
+import * as childProcess from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
 import type { Command } from 'commander';
 import { BASE_URL, isServerRunning, openBrowser, startServer, stopServer } from './http';
 
@@ -169,5 +172,21 @@ export function registerCommands(program: Command): void {
       }
       await startServer();
       console.log('webtty restarted');
+    });
+
+  program
+    .command('help')
+    .description('Print all commands')
+    .action(() => {
+      program.outputHelp();
+    });
+
+  program
+    .command('config')
+    .description('Open the config file in $EDITOR')
+    .action(() => {
+      const configPath = path.join(os.homedir(), '.config', 'webtty', 'config.json');
+      const editor = process.env.EDITOR ?? process.env.VISUAL ?? 'vi';
+      childProcess.spawnSync(editor, [configPath], { stdio: 'inherit' });
     });
 }

@@ -212,3 +212,61 @@ describe('cli — session management', () => {
     expect(stdout).toContain('not running');
   });
 });
+
+describe('cli — no-arg, help, config', () => {
+  let port: number;
+  let baseUrl: string;
+  let serverProc: ChildProcess;
+
+  beforeAll(async () => {
+    port = await getFreePort();
+    baseUrl = `http://127.0.0.1:${port}`;
+    serverProc = spawn(process.execPath, [SERVER_ENTRY], {
+      env: { ...process.env, PORT: String(port) },
+      stdio: 'ignore',
+    });
+    await waitForServer(baseUrl);
+  });
+
+  afterAll(() => {
+    serverProc.kill();
+  });
+
+  test('no-arg creates main session and prints url', async () => {
+    const { stdout, exitCode } = await runCli(port);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('/s/main');
+  });
+
+  test('no-arg reuses main session without error', async () => {
+    const { stdout, exitCode } = await runCli(port);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('/s/main');
+  });
+
+  test('help prints usage', async () => {
+    const { stdout, exitCode } = await runCli(port, 'help');
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('Usage:');
+    expect(stdout).toContain('webtty');
+  });
+
+  test('config opens config path in $EDITOR', async () => {
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const expectedPath = path.join(os.homedir(), '.config', 'webtty', 'config.json');
+
+    const proc = Bun.spawn([process.execPath, CLI_ENTRY, 'config'], {
+      env: { ...process.env, PORT: String(port), EDITOR: 'echo' },
+      stdout: 'pipe',
+      stderr: 'pipe',
+    });
+    const [stdout] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+    ]);
+    const exitCode = await proc.exited;
+    expect(exitCode).toBe(0);
+    expect(stdout.trim()).toContain(expectedPath);
+  });
+});

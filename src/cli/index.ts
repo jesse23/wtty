@@ -6,4 +6,8 @@ program.name('webtty').description('Web TTY — run terminal sessions in a brows
 
 registerCommands(program);
 
-program.parse(process.argv);
+program.action(async () => {
+  await program.parseAsync(['run', 'main'], { from: 'user' });
+});
+
+program.parseAsync(process.argv);

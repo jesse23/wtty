@@ -1,7 +1,7 @@
 # SPEC: CLI
 
 **Author:** jesse23
-**Last Updated:** 2026-03-22
+**Last Updated:** 2026-03-24
 
 ---
 
@@ -28,8 +28,34 @@ The CLI communicates with the server exclusively over HTTP to localhost — no U
 | `webtty rm <id>` | `DELETE /api/sessions/:id` — kill session and its PTY |
 | `webtty rename <id> <new-id>` | `PATCH /api/sessions/:id` — rename a session; session URL updates to reflect new id |
 | `webtty restart` | Stop + start |
-| `webtty` | No-arg entry point — start server if not running, open `main` session in browser | ⬜ |
-| `webtty help` | Alias for `--help` — print all commands | ⬜ |
+| `webtty` | No-arg entry point — start server if not running, then delegate to `webtty run main` |
+| `webtty help` | Alias for `--help` — print all commands |
+| `webtty config` | Open `~/.config/webtty/config.json` in `$EDITOR` (falls back to `$VISUAL`, then `vi`) |
+
+## No-arg entry point
+
+`webtty` with no arguments:
+
+1. Start the server if not already running
+2. Delegate to `webtty run main` — create or reuse the `main` session and open it in the browser
+
+This is the canonical quickstart: `npx webtty` or `bunx webtty` goes from zero to a browser terminal in one command.
+
+## Help command
+
+`webtty help` is an explicit alias for `--help`. It prints the Commander-generated help output listing all commands. Both `webtty help` and `webtty --help` work.
+
+This makes the welcome banner's call-to-action (`Run \`bunx webtty help\` for more information.`) functional.
+
+## Config command
+
+`webtty config` opens `~/.config/webtty/config.json` in the user's preferred editor:
+
+1. Resolve editor: `$EDITOR` → `$VISUAL` → `vi`
+2. Ensure the config file exists (first-run write happens on server startup, but `webtty config` may run before the server has ever started)
+3. Spawn the editor with the config path, inheriting stdio so the terminal is fully handed off
+
+The command exits when the editor exits.
 
 ## Features
 
@@ -38,5 +64,6 @@ The CLI communicates with the server exclusively over HTTP to localhost — no U
 | Server lifecycle | `webtty start` / `stop` — fork, detect, and terminate the server over HTTP | [ADR 002](../adrs/002.cli.start-stop.md) | ✅ |
 | Session management | `webtty run` / `ls` / `rm` / `rename` — create, list, remove, and rename sessions via the REST API | [ADR 006](../adrs/006.cli.session-management.md) | ✅ |
 | Server restart | `webtty restart` — stop then start | [ADR 002](../adrs/002.cli.start-stop.md) | ✅ |
-| No-arg entry point | `webtty` — start server + open `main` session in browser | [ADR 011](../adrs/011.cli.config-and-help.md) | ⬜ |
-| Help command | `webtty help` — alias for `--help` | [ADR 011](../adrs/011.cli.config-and-help.md) | ⬜ |
+| No-arg entry point | `webtty` — start server + open `main` session in browser | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
+| Help command | `webtty help` — alias for `--help` | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
+| Config command | `webtty config` — open config file in `$EDITOR` | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
