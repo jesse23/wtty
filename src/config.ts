@@ -79,8 +79,8 @@ export const DEFAULT_CONFIG: Config = {
   scrollback: 256 * 1024,
   cols: 80,
   rows: 24,
-  fontSize: 14,
-  fontFamily: "'FiraMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",
+  fontSize: 13,
+  fontFamily: "Menlo, Consolas, 'DejaVu Sans Mono', monospace",
   cursorBlink: true,
   theme: DEFAULT_THEME,
 };

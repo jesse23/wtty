@@ -110,8 +110,8 @@ All keys are optional — omit any key to use the default value.
 | `cols` | number | `80` | Initial terminal width in columns |
 | `rows` | number | `24` | Initial terminal height in rows |
 | `cursorBlink` | boolean | `true` | Whether the cursor blinks |
-| `fontSize` | number | `14` | Font size in px |
-| `fontFamily` | string | `"'FiraMono Nerd Font', Menlo, ..."` | CSS font-family stack |
+| `fontSize` | number | `13` | Font size in px |
+| `fontFamily` | string | `"Menlo, Consolas, 'DejaVu Sans Mono', monospace"` | CSS font-family stack |
 | `theme` | object | Dracula | Terminal color palette — see theme keys below |
 
 ### Theme keys
@@ -155,8 +155,8 @@ All theme keys are optional; omitted keys fall back to the Campbell (Windows Ter
   "cols": 80,
   "rows": 24,
   "cursorBlink": true,
-  "fontSize": 14,
-  "fontFamily": "'FiraMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",
+  "fontSize": 13,
+  "fontFamily": "Menlo, Consolas, 'DejaVu Sans Mono', monospace",
 
   "theme": {
     "background":   "#000000",
