@@ -27,6 +27,45 @@ export function closeAllSessions(): void {
   }
 }
 
+const DIM = '\x1b[2m';
+const RESET = '\x1b[0m';
+const BOLD = '\x1b[1m';
+const ITALIC = '\x1b[3m';
+const YELLOW = '\x1b[1;33m';
+const CYAN = '\x1b[1;36m';
+
+function sessionBanner(): string {
+  const W = 49;
+  const pipe = (content: string) => `${CYAN}║${RESET}${content}${CYAN}║${RESET}`;
+  const blank = pipe(' '.repeat(W));
+
+  const titleVis = ' [ webtty ]   Terminal UI in the browser';
+  const titleStr = ` ${DIM}[${RESET} ${BOLD}${YELLOW}webtty${RESET} ${DIM}]   Terminal UI in the browser${RESET}`;
+  const titleLine = pipe(titleStr + ' '.repeat(W - titleVis.length));
+
+  const helpVis = ' Run `npx webtty help` for available commands.';
+  const helpStr = ` ${DIM}Run ${ITALIC}\`npx webtty help\`${RESET}${DIM} for available commands.${RESET}`;
+  const helpLine = pipe(helpStr + ' '.repeat(W - helpVis.length));
+
+  return [
+    `${CYAN}╔${'═'.repeat(W)}╗${RESET}`,
+    '\r\n',
+    blank,
+    '\r\n',
+    titleLine,
+    '\r\n',
+    blank,
+    '\r\n',
+    helpLine,
+    '\r\n',
+    blank,
+    '\r\n',
+    `${CYAN}╚${'═'.repeat(W)}╝${RESET}`,
+    '\r\n',
+    '\r\n',
+  ].join('');
+}
+
 export function createWebSocketServer(httpServer: http.Server): WebSocketServer {
   const wss = new WebSocketServer({ noServer: true });
 
@@ -99,18 +138,7 @@ export function createWebSocketServer(httpServer: http.Server): WebSocketServer 
         session.pty = null;
       });
 
-      const C = '\x1b[1;36m';
-      const G = '\x1b[1;32m';
-      const Y = '\x1b[1;33m';
-      const R = '\x1b[0m';
-      const banner = [
-        `${C}╔══════════════════════════════════════════════════════════════╗${R}\r\n`,
-        `${C}║${R}  ${G}Welcome to webtty!${R}                                          ${C}║${R}\r\n`,
-        `${C}║${R}                                                              ${C}║${R}\r\n`,
-        `${C}║${R}  You have a real shell session with full PTY support.        ${C}║${R}\r\n`,
-        `${C}║${R}  Try: ${Y}ls${R}, ${Y}cd${R}, ${Y}top${R}, ${Y}vim${R}, or any command!                      ${C}║${R}\r\n`,
-        `${C}╚══════════════════════════════════════════════════════════════╝${R}\r\n\r\n`,
-      ].join('');
+      const banner = sessionBanner();
       ws.send(banner);
       session.scrollback = banner;
       session.pty.write('\n');

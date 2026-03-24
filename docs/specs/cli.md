@@ -28,6 +28,8 @@ The CLI communicates with the server exclusively over HTTP to localhost — no U
 | `webtty rm <id>` | `DELETE /api/sessions/:id` — kill session and its PTY |
 | `webtty rename <id> <new-id>` | `PATCH /api/sessions/:id` — rename a session; session URL updates to reflect new id |
 | `webtty restart` | Stop + start |
+| `webtty` | No-arg entry point — start server if not running, open `main` session in browser | ⬜ |
+| `webtty help` | Alias for `--help` — print all commands | ⬜ |
 
 ## Features
 
@@ -36,3 +38,5 @@ The CLI communicates with the server exclusively over HTTP to localhost — no U
 | Server lifecycle | `webtty start` / `stop` — fork, detect, and terminate the server over HTTP | [ADR 002](../adrs/002.cli.start-stop.md) | ✅ |
 | Session management | `webtty run` / `ls` / `rm` / `rename` — create, list, remove, and rename sessions via the REST API | [ADR 006](../adrs/006.cli.session-management.md) | ✅ |
 | Server restart | `webtty restart` — stop then start | [ADR 002](../adrs/002.cli.start-stop.md) | ✅ |
+| No-arg entry point | `webtty` — start server + open `main` session in browser | — | ⬜ |
+| Help command | `webtty help` — alias for `--help` | — | ⬜ |

@@ -3,6 +3,10 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const ANSI_RE = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
+const stripAnsi = (s: string) => s.replace(ANSI_RE, '');
+
 import { WebSocket } from 'ws';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -100,7 +104,7 @@ describe('websocket', () => {
     await waitForMessages(messages, 1);
     await closeWs(ws);
 
-    expect(messages.join('')).toContain('Welcome to webtty');
+    expect(stripAnsi(messages.join(''))).toContain('webtty');
   });
 
   test('reconnect replays scrollback without banner', async () => {
@@ -122,9 +126,9 @@ describe('websocket', () => {
     await waitForMessages(m2, 1);
     await closeWs(ws2);
 
-    const replay = m2.join('');
-    expect(replay).toContain('Welcome to webtty');
-    expect(replay.indexOf('Welcome to webtty')).toBe(replay.lastIndexOf('Welcome to webtty'));
+    const replay = stripAnsi(m2.join(''));
+    expect(replay).toContain('webtty');
+    expect(replay.indexOf('Terminal UI')).toBe(replay.lastIndexOf('Terminal UI'));
   });
 
   test('multiple clients receive same PTY output', async () => {
