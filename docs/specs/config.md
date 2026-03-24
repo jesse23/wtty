@@ -106,13 +106,14 @@ All keys are optional — omit any key to use the default value.
 | `host` | string | `"127.0.0.1"` | Bind address; use `"0.0.0.0"` for remote access |
 | `shell` | string | `$SHELL` / `%COMSPEC%` | Shell for new sessions |
 | `term` | string | `$TERM` | `$TERM` env var passed to the shell |
+| `colorTerm` | string | `"truecolor"` | `$COLORTERM` env var passed to the shell |
 | `scrollback` | number | `262144` | PTY history buffer in bytes; used for server-side replay on reload/reconnect |
 | `cols` | number | `80` | Initial terminal width in columns |
 | `rows` | number | `24` | Initial terminal height in rows |
 | `cursorBlink` | boolean | `true` | Whether the cursor blinks |
 | `fontSize` | number | `13` | Font size in px |
 | `fontFamily` | string | `"Menlo, Consolas, 'DejaVu Sans Mono', monospace"` | CSS font-family stack |
-| `theme` | object | Dracula | Terminal color palette — see theme keys below |
+| `theme` | object | Campbell | Terminal color palette — see theme keys below |
 
 ### Theme keys
 

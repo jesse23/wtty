@@ -33,7 +33,6 @@ const BOLD = '\x1b[1m';
 const ITALIC = '\x1b[3m';
 const YELLOW = '\x1b[1;33m';
 const CYAN = '\x1b[1;36m';
-const DIM_ITALIC = '\x1b[3m';
 
 const isBun = process.execPath.includes('bun');
 const PKG_RUNNER = isBun ? 'bunx' : 'npx';

@@ -6,18 +6,17 @@ import { DEFAULT_CONFIG, DEFAULT_THEME, loadConfig, saveConfig } from './config'
 
 let tmpDir: string;
 let configPath: string;
-
-const origHome = os.homedir();
+let homedirSpy: ReturnType<typeof spyOn>;
 
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'webtty-config-test-'));
   configPath = path.join(tmpDir, '.config', 'webtty', 'config.json');
-  spyOn(os, 'homedir').mockReturnValue(tmpDir);
+  homedirSpy = spyOn(os, 'homedir').mockReturnValue(tmpDir);
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
-  spyOn(os, 'homedir').mockReturnValue(origHome);
+  homedirSpy.mockRestore();
 });
 
 describe('saveConfig', () => {

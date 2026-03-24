@@ -76,7 +76,7 @@ describe('stopServer', () => {
 
 describe('startServer', () => {
   test('exits with error when server entry not found', async () => {
-    spyOn(fs, 'existsSync').mockReturnValue(false);
+    const existsSpy = spyOn(fs, 'existsSync').mockReturnValue(false);
     const exitSpy = spyOn(process, 'exit').mockImplementation((() => {}) as () => never);
     const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
 
@@ -86,13 +86,13 @@ describe('startServer', () => {
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('server entry not found'));
     expect(exitSpy).toHaveBeenCalledWith(1);
 
+    existsSpy.mockRestore();
     exitSpy.mockRestore();
     errorSpy.mockRestore();
-    (fs.existsSync as ReturnType<typeof spyOn>).mockRestore();
   });
 
   test('spawns server and resolves when it becomes reachable', async () => {
-    spyOn(fs, 'existsSync').mockReturnValue(true);
+    const existsSpy = spyOn(fs, 'existsSync').mockReturnValue(true);
     const fakeChild = { unref: mock(() => {}) };
     const spawnMock = mock(() => fakeChild);
 
@@ -109,28 +109,7 @@ describe('startServer', () => {
     expect(calls).toBeGreaterThanOrEqual(3);
     expect(fakeChild.unref).toHaveBeenCalled();
 
-    (fs.existsSync as ReturnType<typeof spyOn>).mockRestore();
-  });
-
-  test('exits with error when server does not start within timeout', async () => {
-    spyOn(fs, 'existsSync').mockReturnValue(true);
-    const spawnMock = mock(() => ({ unref: () => {} }));
-    const exitSpy = spyOn(process, 'exit').mockImplementation((() => {}) as () => never);
-    const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-
-    globalThis.fetch = mock(async () => {
-      throw new Error('not yet');
-    }) as unknown as typeof fetch;
-
-    const { startServer } = await import('./http');
-    await startServer(100, spawnMock as never);
-
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('server did not start in time'));
-    expect(exitSpy).toHaveBeenCalledWith(1);
-
-    (fs.existsSync as ReturnType<typeof spyOn>).mockRestore();
-    exitSpy.mockRestore();
-    errorSpy.mockRestore();
+    existsSpy.mockRestore();
   });
 
   test('exits with error when server does not start within timeout', async () => {

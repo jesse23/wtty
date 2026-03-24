@@ -1,6 +1,6 @@
 import type http from 'node:http';
 import path from 'node:path';
-import { type Config, loadConfig } from '../config';
+import { loadConfig } from '../config';
 import { render } from './client';
 import {
   createSession,
@@ -50,7 +50,6 @@ export async function handleRequest(
   res: http.ServerResponse,
   distPath: string,
   wasmPath: string,
-  config: Config,
   onStop: () => void,
 ): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? '127.0.0.1'}`);

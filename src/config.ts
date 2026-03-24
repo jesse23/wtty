@@ -120,6 +120,7 @@ export function loadConfig(): Config {
     ...(typeof p.host === 'string' && { host: p.host }),
     ...(typeof p.shell === 'string' && { shell: p.shell }),
     ...(typeof p.term === 'string' && { term: p.term }),
+    ...(typeof p.colorTerm === 'string' && { colorTerm: p.colorTerm }),
     ...(typeof p.scrollback === 'number' && { scrollback: p.scrollback }),
     ...(typeof p.cols === 'number' && { cols: p.cols }),
     ...(typeof p.rows === 'number' && { rows: p.rows }),

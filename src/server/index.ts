@@ -22,7 +22,7 @@ function shutdown() {
 }
 
 const httpServer = http.createServer((req, res) => {
-  handleRequest(req, res, distPath, wasmPath, config, shutdown);
+  handleRequest(req, res, distPath, wasmPath, shutdown);
 });
 
 const wss = createWebSocketServer(httpServer);
