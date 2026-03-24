@@ -116,30 +116,30 @@ All keys are optional — omit any key to use the default value.
 
 ### Theme keys
 
-All theme keys are optional; omitted keys fall back to the Dracula defaults.
+All theme keys are optional; omitted keys fall back to the Campbell (Windows Terminal default) palette.
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `background` | `#282A36` | Terminal background |
-| `foreground` | `#F8F8F2` | Default text color |
-| `cursor` | `#F8F8F2` | Cursor color |
-| `selection` | `#44475A` | Selection highlight |
-| `black` | `#21222C` | ANSI 0 |
-| `red` | `#FF5555` | ANSI 1 |
-| `green` | `#50FA7B` | ANSI 2 |
-| `yellow` | `#F1FA8C` | ANSI 3 |
-| `blue` | `#BD93F9` | ANSI 4 |
-| `purple` | `#FF79C6` | ANSI 5 |
-| `cyan` | `#8BE9FD` | ANSI 6 |
-| `white` | `#F8F8F2` | ANSI 7 |
-| `brightBlack` | `#6272A4` | ANSI 8 |
-| `brightRed` | `#FF6E6E` | ANSI 9 |
-| `brightGreen` | `#69FF94` | ANSI 10 |
-| `brightYellow` | `#FFFFA5` | ANSI 11 |
-| `brightBlue` | `#D6ACFF` | ANSI 12 |
-| `brightPurple` | `#FF92DF` | ANSI 13 |
-| `brightCyan` | `#A4FFFF` | ANSI 14 |
-| `brightWhite` | `#FFFFFF` | ANSI 15 |
+| `background` | `#000000` | Terminal background |
+| `foreground` | `#CCCCCC` | Default text color |
+| `cursor` | `#FFFFFF` | Cursor color |
+| `selection` | `#FFFFFF` | Selection highlight |
+| `black` | `#0C0C0C` | ANSI 0 |
+| `red` | `#C50F1F` | ANSI 1 |
+| `green` | `#13A10E` | ANSI 2 |
+| `yellow` | `#C19C00` | ANSI 3 |
+| `blue` | `#0037DA` | ANSI 4 |
+| `purple` | `#881798` | ANSI 5 |
+| `cyan` | `#3A96DD` | ANSI 6 |
+| `white` | `#CCCCCC` | ANSI 7 |
+| `brightBlack` | `#767676` | ANSI 8 |
+| `brightRed` | `#E74856` | ANSI 9 |
+| `brightGreen` | `#16C60C` | ANSI 10 |
+| `brightYellow` | `#F9F1A5` | ANSI 11 |
+| `brightBlue` | `#3B78FF` | ANSI 12 |
+| `brightPurple` | `#B4009E` | ANSI 13 |
+| `brightCyan` | `#61D6D6` | ANSI 14 |
+| `brightWhite` | `#F2F2F2` | ANSI 15 |
 
 ### Example
 
@@ -159,26 +159,26 @@ All theme keys are optional; omitted keys fall back to the Dracula defaults.
   "fontFamily": "'FiraMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",
 
   "theme": {
-    "background":   "#282A36",
-    "foreground":   "#F8F8F2",
-    "cursor":       "#F8F8F2",
-    "selection":    "#44475A",
-    "black":        "#21222C",
-    "red":          "#FF5555",
-    "green":        "#50FA7B",
-    "yellow":       "#F1FA8C",
-    "blue":         "#BD93F9",
-    "purple":       "#FF79C6",
-    "cyan":         "#8BE9FD",
-    "white":        "#F8F8F2",
-    "brightBlack":  "#6272A4",
-    "brightRed":    "#FF6E6E",
-    "brightGreen":  "#69FF94",
-    "brightYellow": "#FFFFA5",
-    "brightBlue":   "#D6ACFF",
-    "brightPurple": "#FF92DF",
-    "brightCyan":   "#A4FFFF",
-    "brightWhite":  "#FFFFFF"
+    "background":   "#000000",
+    "foreground":   "#CCCCCC",
+    "cursor":       "#FFFFFF",
+    "selection":    "#FFFFFF",
+    "black":        "#0C0C0C",
+    "red":          "#C50F1F",
+    "green":        "#13A10E",
+    "yellow":       "#C19C00",
+    "blue":         "#0037DA",
+    "purple":       "#881798",
+    "cyan":         "#3A96DD",
+    "white":        "#CCCCCC",
+    "brightBlack":  "#767676",
+    "brightRed":    "#E74856",
+    "brightGreen":  "#16C60C",
+    "brightYellow": "#F9F1A5",
+    "brightBlue":   "#3B78FF",
+    "brightPurple": "#B4009E",
+    "brightCyan":   "#61D6D6",
+    "brightWhite":  "#F2F2F2"
   }
 }
 ```
