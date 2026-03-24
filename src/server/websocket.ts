@@ -3,7 +3,29 @@ import type { WebSocket as WS } from 'ws';
 import { WebSocketServer } from 'ws';
 import { loadConfig } from '../config';
 import { spawnForSession } from '../pty';
+import type { Session } from './session';
 import { sessionRegistry, setLastUsedId } from './session';
+
+const WS_CLOSE = {
+  SERVER_STOPPED: 1001 as const, // RFC 6455: server going away
+  BAD_REQUEST: 1008 as const, // RFC 6455: policy violation / bad data
+  SESSION_GONE: 4001 as const, // app-level: session deleted or shell exited
+} as const;
+
+function closeClients(session: Session, code: number, reason: string): void {
+  session.pty?.kill();
+  for (const client of session.clients) client.close(code, reason);
+}
+
+export function closeSession(session: Session): void {
+  closeClients(session, WS_CLOSE.SESSION_GONE, 'session deleted');
+}
+
+export function closeAllSessions(): void {
+  for (const session of sessionRegistry.values()) {
+    closeClients(session, WS_CLOSE.SERVER_STOPPED, 'server stopped');
+  }
+}
 
 export function createWebSocketServer(httpServer: http.Server): WebSocketServer {
   const wss = new WebSocketServer({ noServer: true });
@@ -29,7 +51,7 @@ export function createWebSocketServer(httpServer: http.Server): WebSocketServer 
     try {
       id = decodeURIComponent(wsMatch[1]);
     } catch {
-      ws.close(1008, 'Bad Request');
+      ws.close(WS_CLOSE.BAD_REQUEST, 'Bad Request');
       return;
     }
     const cols = Math.max(
@@ -42,13 +64,13 @@ export function createWebSocketServer(httpServer: http.Server): WebSocketServer 
     );
 
     if (!sessionRegistry.has(id)) {
-      ws.close(4001, 'session deleted');
+      ws.close(WS_CLOSE.SESSION_GONE, 'session deleted');
       return;
     }
 
     const session = sessionRegistry.get(id);
     if (!session) {
-      ws.close(4001, 'session deleted');
+      ws.close(WS_CLOSE.SESSION_GONE, 'session deleted');
       return;
     }
     session.clients.add(ws);
@@ -71,7 +93,7 @@ export function createWebSocketServer(httpServer: http.Server): WebSocketServer 
         sessionRegistry.delete(session.id);
         for (const client of session.clients) {
           if (client.readyState === client.OPEN) {
-            client.close(4001, 'shell exited');
+            client.close(WS_CLOSE.SESSION_GONE, 'shell exited');
           }
         }
         session.pty = null;

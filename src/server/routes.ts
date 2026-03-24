@@ -12,6 +12,7 @@ import {
   setLastUsedId,
 } from './session';
 import { serveFile } from './static';
+import { closeSession } from './websocket';
 
 const MAX_BODY = 64 * 1024;
 
@@ -172,8 +173,7 @@ export async function handleRequest(
       }
       sessionRegistry.delete(id);
       if (lastUsedId === id) setLastUsedId(null);
-      for (const client of session.clients) client.close(4001, 'session deleted');
-      session.pty?.kill();
+      closeSession(session);
       res.writeHead(204);
       res.end();
       return;
