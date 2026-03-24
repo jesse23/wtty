@@ -169,6 +169,8 @@ describe('openBrowser', () => {
   });
 
   test('spawns open on darwin', async () => {
+    const origNodeEnv = process.env.NODE_ENV;
+    delete process.env.NODE_ENV;
     const origPlatform = process.platform;
     Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
     const spawnMock = mock(() => ({ unref: () => {} }));
@@ -182,9 +184,12 @@ describe('openBrowser', () => {
     );
 
     Object.defineProperty(process, 'platform', { value: origPlatform, configurable: true });
+    process.env.NODE_ENV = origNodeEnv;
   });
 
   test('spawns xdg-open on linux', async () => {
+    const origNodeEnv = process.env.NODE_ENV;
+    delete process.env.NODE_ENV;
     const origPlatform = process.platform;
     Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
     const spawnMock = mock(() => ({ unref: () => {} }));
@@ -198,9 +203,12 @@ describe('openBrowser', () => {
     );
 
     Object.defineProperty(process, 'platform', { value: origPlatform, configurable: true });
+    process.env.NODE_ENV = origNodeEnv;
   });
 
   test('spawns cmd.exe on win32', async () => {
+    const origNodeEnv = process.env.NODE_ENV;
+    delete process.env.NODE_ENV;
     const origPlatform = process.platform;
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
     const spawnMock = mock(() => ({ unref: () => {} }));
@@ -214,5 +222,6 @@ describe('openBrowser', () => {
     );
 
     Object.defineProperty(process, 'platform', { value: origPlatform, configurable: true });
+    process.env.NODE_ENV = origNodeEnv;
   });
 });

@@ -59,6 +59,7 @@ export async function stopServer(baseUrl: string = BASE_URL, timeoutMs = 5000): 
 
 export function openBrowser(url: string, _spawn = childProcess.spawn): void {
   if (process.env.WEBTTY_NO_OPEN === '1') return;
+  if (process.env.NODE_ENV === 'test') return;
   if (process.platform === 'win32') {
     _spawn('cmd.exe', ['/c', 'start', '', url], { detached: true, stdio: 'ignore' }).unref();
   } else {
