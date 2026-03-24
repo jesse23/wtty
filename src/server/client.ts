@@ -60,18 +60,20 @@ export function render(sessionId: string, config: Config): string {
         };
 
         ws.onclose = (event) => {
+          const DIM = '\\x1b[2m', YELLOW = '\\x1b[1;33m', ITALIC = '\\x1b[3m', RESET = '\\x1b[0m';
+          const tag = DIM + '[' + RESET + ' ' + YELLOW + 'webtty' + RESET + ' ' + DIM + ']' + RESET;
+          const msg = (text) => '\\r\\n' + tag + ' ' + DIM + ITALIC + text + RESET + '\\r\\n';
           if (event.code === 4001) {
-            term.write('\\r\\n\\x1b[31mSession removed.\\x1b[0m\\r\\n');
+            term.write(msg('Session removed.'));
             setTimeout(() => window.close(), 500);
             return;
           }
           if (event.code === 1001) {
-            term.write('\\r\\n\\x1b[33mServer stopped.\\x1b[0m\\r\\n');
+            term.write(msg('Server stopped.'));
             setTimeout(() => window.close(), 500);
             return;
           }
-          console.log('[webtty] disconnected, reconnecting in 2s...');
-          term.write('\\r\\n\\x1b[31mConnection closed. Reconnecting in 2s...\\x1b[0m\\r\\n');
+          term.write(msg('Connection lost. Reconnecting in 2s...'));          
           setTimeout(connect, 2000);
         };
 

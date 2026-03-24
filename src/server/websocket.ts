@@ -33,9 +33,13 @@ const BOLD = '\x1b[1m';
 const ITALIC = '\x1b[3m';
 const YELLOW = '\x1b[1;33m';
 const CYAN = '\x1b[1;36m';
+const DIM_ITALIC = '\x1b[3m';
+
+const isBun = process.execPath.includes('bun');
+const PKG_RUNNER = isBun ? 'bunx' : 'npx';
 
 function sessionBanner(): string {
-  const W = 49;
+  const W = 48;
   const pipe = (content: string) => `${CYAN}║${RESET}${content}${CYAN}║${RESET}`;
   const blank = pipe(' '.repeat(W));
 
@@ -43,8 +47,9 @@ function sessionBanner(): string {
   const titleStr = ` ${DIM}[${RESET} ${BOLD}${YELLOW}webtty${RESET} ${DIM}]   Terminal UI in the browser${RESET}`;
   const titleLine = pipe(titleStr + ' '.repeat(W - titleVis.length));
 
-  const helpVis = ' Run `npx webtty help` for available commands.';
-  const helpStr = ` ${DIM}Run ${ITALIC}\`npx webtty help\`${RESET}${DIM} for available commands.${RESET}`;
+  const cmd = `${PKG_RUNNER} webtty help`;
+  const helpVis = ` Run \`${cmd}\` for more information.`;
+  const helpStr = ` ${DIM}Run \`${RESET}${ITALIC}${cmd}${RESET}${DIM}\` for more information.${RESET}`;
   const helpLine = pipe(helpStr + ' '.repeat(W - helpVis.length));
 
   return [
