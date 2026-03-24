@@ -38,6 +38,7 @@ program
 
       const usageBlock = [
         `${helper.styleTitle('Usage:')} ${helper.styleUsage(helper.commandUsage(cmd))}`,
+        `${' '.repeat('Usage: '.length)}${helper.styleUsage('webtty')}  ${helper.styleCommandDescription('# open main session')}`,
         '',
       ];
 

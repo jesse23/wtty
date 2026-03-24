@@ -85,7 +85,7 @@ export function registerCommands(program: Command): void {
   program
     .command('rm [id]')
     .alias('remove')
-    .description('Remove a session and kill its PTY')
+    .description('Destroy a session')
     .action(async (id?: string) => {
       if (!id) {
         console.error('webtty: rm requires a session id');
@@ -144,21 +144,7 @@ export function registerCommands(program: Command): void {
     });
 
   program
-    .command('up')
-    .alias('start')
-    .description('Start the webtty server')
-    .action(async () => {
-      if (await isServerRunning()) {
-        console.log('webtty is already running');
-        return;
-      }
-      await startServer();
-      console.log('webtty started');
-    });
-
-  program
-    .command('down')
-    .alias('stop')
+    .command('stop')
     .description('Stop the webtty server')
     .action(async () => {
       if (!(await isServerRunning())) {
@@ -172,6 +158,18 @@ export function registerCommands(program: Command): void {
         console.error('webtty stop failed');
         process.exit(1);
       }
+    });
+
+  program
+    .command('start')
+    .description('Start the webtty server')
+    .action(async () => {
+      if (await isServerRunning()) {
+        console.log('webtty is already running');
+        return;
+      }
+      await startServer();
+      console.log('webtty started');
     });
 
   program
