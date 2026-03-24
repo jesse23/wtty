@@ -7,8 +7,8 @@ const RESET = '\x1b[0m';
 
 const WEBTTY = `${BOLD}${YELLOW}Web TTY${RESET}`;
 
-const CMDS_WITH_ARGS = new Set(['run', 'rm', 'ls', 'rename']);
-const CMD_NAME_WIDTH = 'rename'.length;
+const CMDS_WITH_ARGS = new Set(['at', 'rm', 'ls', 'mv']);
+const CMD_NAME_WIDTH = 'mv'.length;
 
 const program = new Command();
 program
@@ -77,7 +77,7 @@ program
 registerCommands(program);
 
 program.action(async () => {
-  await program.parseAsync(['run', 'main'], { from: 'user' });
+  await program.parseAsync(['at', 'main'], { from: 'user' });
 });
 
 program.parseAsync(process.argv);

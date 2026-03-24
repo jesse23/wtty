@@ -23,7 +23,7 @@ The CLI communicates with the server exclusively over HTTP to localhost — no U
 
 | Command | Description |
 |---------|-------------|
-| `webtty run [id]` | Start server if not running; create session (auto-generates ID if omitted) or reuse if ID exists; open session URL in the default browser |
+| `webtty at [id]` | Start server if not running; create session (auto-generates ID if omitted) or reuse if ID exists; open session URL in the default browser. Alias: `attach` (undocumented) |
 | `webtty rm [id]` | `DELETE /api/sessions/:id` — kill session and its PTY |
 | `webtty ls [id]` | `GET /api/sessions` — list sessions; if `[id]` is given, filter by substring match |
 | `webtty rename [id] [new-id]` | `PATCH /api/sessions/:id` — rename a session; session URL updates to reflect new id |
@@ -38,11 +38,9 @@ The CLI communicates with the server exclusively over HTTP to localhost — no U
 `webtty` with no arguments:
 
 1. Start the server if not already running
-2. Delegate to `webtty run main` — create or reuse the `main` session and open it in the browser
+2. Delegate to `webtty at main` — create or reuse the `main` session and open it in the browser
 
-This is the canonical quickstart: `npx webtty` or `bunx webtty` goes from zero to a browser terminal in one command.
-
-## Help command
+This is the canonical quickstart: `npx webtty` or `bunx webtty` goes from zero to a browser terminal in one command.## Help command
 
 `webtty help` prints all commands. The `-h` / `--help` flag is not advertised but still works if users reach for it.
 
@@ -63,7 +61,7 @@ The command exits when the editor exits.
 | Feature | Description | ADR | Done? |
 |---------|-------------|-----|-------|
 | Server lifecycle | `webtty start` / `stop` — fork, detect, and terminate the server over HTTP | [ADR 002](../adrs/002.cli.start-stop.md) | ✅ |
-| Session management | `webtty run` / `ls` / `rm` / `rename` — create, list, remove, and rename sessions via the REST API | [ADR 006](../adrs/006.cli.session-management.md) | ✅ |
+| Session management | `webtty at` / `ls` / `rm` / `rename` — create, list, remove, and rename sessions via the REST API | [ADR 006](../adrs/006.cli.session-management.md) | ✅ |
 | No-arg entry point | `webtty` — start server + open `main` session in browser | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
 | Help command | `webtty help` — show all commands | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
 | Config command | `webtty config` — open config file in `$EDITOR` | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |

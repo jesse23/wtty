@@ -6,8 +6,9 @@ import { BASE_URL, isServerRunning, openBrowser, startServer, stopServer } from 
 
 export function registerCommands(program: Command): void {
   program
-    .command('run [id]')
-    .description('Create or reuse a session and open it in the browser')
+    .command('at [id]')
+    .alias('attach')
+    .description('Attach to a new or existing session and open in browser')
     .action(async (id?: string) => {
       if (!(await isServerRunning())) {
         await startServer();
@@ -53,35 +54,8 @@ export function registerCommands(program: Command): void {
     });
 
   program
-    .command('rm [id]')
-    .description('Kill a session and its PTY')
-    .action(async (id?: string) => {
-      if (!id) {
-        console.error('webtty: rm requires a session id');
-        process.exit(1);
-      }
-      let res: Response;
-      try {
-        res = await fetch(`${BASE_URL}/api/sessions/${encodeURIComponent(id)}`, {
-          method: 'DELETE',
-        });
-      } catch {
-        console.log('webtty is not running');
-        process.exit(1);
-      }
-      if (res.status === 204) {
-        console.log(`removed ${id}`);
-      } else if (res.status === 404) {
-        console.error(`session ${id} not found`);
-        process.exit(1);
-      } else {
-        console.error(`webtty rm failed (status: ${res.status})`);
-        process.exit(1);
-      }
-    });
-
-  program
     .command('ls [id]')
+    .alias('list')
     .description('List all sessions, or filter by id substring')
     .action(async (filter?: string) => {
       let res: Response;
@@ -109,7 +83,37 @@ export function registerCommands(program: Command): void {
     });
 
   program
-    .command('rename [id] [new-id]')
+    .command('rm [id]')
+    .alias('remove')
+    .description('Remove a session and kill its PTY')
+    .action(async (id?: string) => {
+      if (!id) {
+        console.error('webtty: rm requires a session id');
+        process.exit(1);
+      }
+      let res: Response;
+      try {
+        res = await fetch(`${BASE_URL}/api/sessions/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
+      } catch {
+        console.log('webtty is not running');
+        process.exit(1);
+      }
+      if (res.status === 204) {
+        console.log(`removed ${id}`);
+      } else if (res.status === 404) {
+        console.error(`session ${id} not found`);
+        process.exit(1);
+      } else {
+        console.error(`webtty rm failed (status: ${res.status})`);
+        process.exit(1);
+      }
+    });
+
+  program
+    .command('mv [id] [new-id]')
+    .alias('rename')
     .description('Rename a session')
     .action(async (id?: string, newId?: string) => {
       if (!id || !newId) {
@@ -140,7 +144,8 @@ export function registerCommands(program: Command): void {
     });
 
   program
-    .command('start')
+    .command('up')
+    .alias('start')
     .description('Start the webtty server')
     .action(async () => {
       if (await isServerRunning()) {
@@ -152,7 +157,8 @@ export function registerCommands(program: Command): void {
     });
 
   program
-    .command('stop')
+    .command('down')
+    .alias('stop')
     .description('Stop the webtty server')
     .action(async () => {
       if (!(await isServerRunning())) {
