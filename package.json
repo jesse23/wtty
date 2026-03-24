@@ -3,8 +3,7 @@
   "version": "0.0.0-development",
   "description": "Web TTY for running CLI/TUI applications in a browser tab, across platforms",
   "bin": {
-    "webtty": "dist/cli/index.js",
-    "wtty": "dist/cli/index.js"
+    "webtty": "dist/cli/index.js"
   },
   "files": [
     "dist"

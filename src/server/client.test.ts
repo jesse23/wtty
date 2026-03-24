@@ -12,7 +12,7 @@ describe('clientShell', () => {
 
   test('injects session id into title', () => {
     const html = render('my-session', DEFAULT_CONFIG);
-    expect(html).toContain('webtty — my-session');
+    expect(html).toContain('my-session | webtty');
   });
 
   test('injects session id as JS string literal', () => {
