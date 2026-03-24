@@ -2,13 +2,19 @@ import { homedir } from 'node:os';
 import nodePty from '@lydell/node-pty';
 import type { PtyProcess } from './types';
 
-export function spawn(shell: string, cols: number, rows: number): PtyProcess {
+export function spawn(
+  shell: string,
+  cols: number,
+  rows: number,
+  term: string,
+  colorTerm: string,
+): PtyProcess {
   const ptyProc = nodePty.spawn(shell, [], {
-    name: 'xterm-256color',
+    name: term,
     cols,
     rows,
     cwd: homedir(),
-    env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+    env: { ...process.env, TERM: term, COLORTERM: colorTerm },
   });
 
   return {

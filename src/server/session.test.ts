@@ -1,5 +1,13 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { createSession, generateId, isValidId, sessionRegistry, sessionToJson } from './session';
+import {
+  createSession,
+  generateId,
+  isValidId,
+  lastUsedId,
+  sessionRegistry,
+  sessionToJson,
+  setLastUsedId,
+} from './session';
 
 beforeEach(() => {
   sessionRegistry.clear();
@@ -81,5 +89,18 @@ describe('sessionToJson', () => {
     const json = sessionToJson(session);
     expect(json.id).toBe('test');
     expect(typeof json.createdAt).toBe('number');
+  });
+});
+
+describe('setLastUsedId', () => {
+  test('updates lastUsedId to the given value', () => {
+    setLastUsedId('my-session');
+    expect(lastUsedId).toBe('my-session');
+  });
+
+  test('accepts null to clear lastUsedId', () => {
+    setLastUsedId('my-session');
+    setLastUsedId(null);
+    expect(lastUsedId).toBeNull();
   });
 });

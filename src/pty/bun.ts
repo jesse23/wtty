@@ -1,7 +1,13 @@
 import { homedir } from 'node:os';
 import type { PtyProcess } from './types';
 
-export function spawn(shell: string, cols: number, rows: number): PtyProcess {
+export function spawn(
+  shell: string,
+  cols: number,
+  rows: number,
+  term: string,
+  colorTerm: string,
+): PtyProcess {
   let onDataCb: ((data: string) => void) | undefined;
   let onExitCb: ((e: { exitCode: number }) => void) | undefined;
 
@@ -14,7 +20,7 @@ export function spawn(shell: string, cols: number, rows: number): PtyProcess {
       },
     },
     cwd: homedir(),
-    env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+    env: { ...process.env, TERM: term, COLORTERM: colorTerm },
   });
 
   proc.exited.then((exitCode) => {

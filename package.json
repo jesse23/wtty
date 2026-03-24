@@ -3,8 +3,7 @@
   "version": "0.0.0-development",
   "description": "Web TTY for running CLI/TUI applications in a browser tab, across platforms",
   "bin": {
-    "webtty": "dist/cli/index.js",
-    "wtty": "dist/cli/index.js"
+    "webtty": "dist/cli/index.js"
   },
   "files": [
     "dist"
@@ -19,6 +18,7 @@
     "lint": "tsc --noEmit -p tsconfig.lint.json && biome check .",
     "lint:fix": "tsc --noEmit -p tsconfig.lint.json && bunx biome check --write .",
     "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "build": "bun run scripts/build.ts",
     "server": "bun run dist/server/index.js",
     "server:node": "node dist/server/index.js",
