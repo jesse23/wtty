@@ -37,7 +37,7 @@ program
       const usageWidth = 'webtty [command]'.length;
       const usageBlock = [
         helper.styleTitle('Usage:'),
-        `${indent}${helper.styleUsage('webtty'.padEnd(usageWidth))}  ${helper.styleCommandDescription('Open main session')}`,
+        `${indent}${helper.styleUsage('webtty'.padEnd(usageWidth))}  ${helper.styleCommandDescription('Attach to main session and open it')}`,
         `${indent}${helper.styleUsage('webtty [command]'.padEnd(usageWidth))}  ${helper.styleCommandDescription('Execute a specific command')}`,
         '',
       ];

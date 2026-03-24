@@ -7,8 +7,9 @@ import { BASE_URL, isServerRunning, openBrowser, startServer, stopServer } from 
 export function registerCommands(program: Command): void {
   program
     .command('at [id]')
+    .alias('a')
     .alias('attach')
-    .description('Attach to a new or existing session and open in browser')
+    .description('Attach to a new or existing session and open it')
     .action(async (id?: string) => {
       if (!(await isServerRunning())) {
         await startServer();
@@ -117,6 +118,7 @@ export function registerCommands(program: Command): void {
 
   program
     .command('mv [id] [new-id]')
+    .alias('move')
     .alias('rename')
     .description('Rename a session')
     .action(async (id?: string, newId?: string) => {
