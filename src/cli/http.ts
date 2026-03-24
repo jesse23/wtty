@@ -11,8 +11,10 @@ export const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 export async function isServerRunning(): Promise<boolean> {
   try {
-    await fetch(`${BASE_URL}/api/sessions`);
-    return true;
+    const res = await fetch(`${BASE_URL}/api/sessions`);
+    if (!res.ok) return false;
+    const body = await res.json();
+    return Array.isArray(body);
   } catch {
     return false;
   }
