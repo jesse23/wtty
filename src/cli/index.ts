@@ -1,4 +1,4 @@
-import { cmdConfig, cmdGo, cmdLs, cmdMv, cmdRm, cmdStart, cmdStop } from './commands';
+import { cmdConfig, cmdGo, cmdList, cmdRename, cmdRemove, cmdStart, cmdStop } from './commands';
 
 const GO_ALIASES = new Set(['go', 'a', 'run', 'attach', 'open']);
 
@@ -36,16 +36,16 @@ if (!cmd || GO_ALIASES.has(cmd)) {
   switch (cmd) {
     case 'ls':
     case 'list':
-      await cmdLs(rest[0]);
+      await cmdList(rest[0]);
       break;
     case 'rm':
     case 'remove':
-      await cmdRm(rest[0]);
+      await cmdRemove(rest[0]);
       break;
     case 'mv':
     case 'move':
     case 'rename':
-      await cmdMv(rest[0], rest[1]);
+      await cmdRename(rest[0], rest[1]);
       break;
     case 'stop':
       await cmdStop();

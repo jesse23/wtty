@@ -48,7 +48,7 @@ export async function cmdGo(id?: string): Promise<void> {
   openBrowser(url);
 }
 
-export async function cmdLs(filter?: string): Promise<void> {
+export async function cmdList(filter?: string): Promise<void> {
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}/api/sessions`);
@@ -73,7 +73,7 @@ export async function cmdLs(filter?: string): Promise<void> {
   }
 }
 
-export async function cmdRm(id?: string): Promise<void> {
+export async function cmdRemove(id?: string): Promise<void> {
   if (!id) {
     console.error('webtty: rm requires a session id');
     process.exit(1);
@@ -102,7 +102,7 @@ export async function cmdRm(id?: string): Promise<void> {
   }
 }
 
-export async function cmdMv(id?: string, newId?: string): Promise<void> {
+export async function cmdRename(id?: string, newId?: string): Promise<void> {
   if (!id || !newId) {
     console.error('webtty: rename requires two arguments: [id] [new-id]');
     process.exit(1);
