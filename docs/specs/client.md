@@ -19,7 +19,7 @@ The client has no build step in the initial slices — plain HTML + `<script typ
 
 `GET /s/:id` returns a full-viewport HTML page. It:
 
-- Initialises a `ghostty-web` `Terminal` with config values (cols, rows, fontSize, fontFamily, cursorBlink, scrollback, theme) injected server-side at render time
+- Initialises a `ghostty-web` `Terminal` with config values (cols, rows, fontSize, fontFamily, cursorBlink, scrollback, theme, copyOnSelect, rightClickBehavior) injected server-side at render time
 - Connects to `ws://<host>/ws/:id?cols=<cols>&rows=<rows>` over WebSocket
 - Fits the terminal to the viewport and observes resize events via `FitAddon`
 - Sends a `{ type: 'resize', cols, rows }` JSON message on open and on every terminal resize
@@ -62,6 +62,17 @@ All status messages written to the terminal share a consistent style:
 | WS close (unexpected) | `Connection lost. Reconnecting in 2s...` | Reconnect after 2s |
 | WS error | `WebSocket error.` | — |
 
+## Copy Behavior
+
+Controlled by two config keys injected at render time:
+
+| Config | Default | Behavior |
+|--------|---------|----------|
+| `copyOnSelect: true` | on | Auto-copies selection to clipboard on mouseup via `term.onSelectionChange` — matches kitty / Windows Terminal. Context menu untouched. |
+| `rightClickBehavior: "copyPaste"` | off | Right-click with selection copies + clears selection via `navigator.clipboard`. `e.preventDefault()` only fires when selection exists. |
+
+Both can be active simultaneously. The canvas-based terminal has no DOM text selection, so the browser's native Copy in the context menu is always disabled — these are the only reliable copy paths.
+
 ## Behavior Notes
 
 ### Tab close on session end
@@ -70,7 +81,7 @@ When a session ends (shell exits → WS close code `4001`) or the server stops (
 
 **Browser restriction**: `window.close()` is only permitted on tabs that were opened programmatically via `window.open()`, or duplicated from such a tab. Tabs opened by the OS (`open`/`xdg-open`) or by the user typing a URL directly are treated as unowned — `window.close()` is silently ignored. In practice:
 
-- Tabs opened by `webtty run` and tabs duplicated from them → close automatically ✅
+- Tabs opened by `webtty at` and tabs duplicated from them → close automatically ✅
 - Tabs opened by manually navigating to the server URL → display the status message but remain open ⚠️
 
 This is a browser-enforced security restriction with no JS workaround.
@@ -83,3 +94,4 @@ This is a browser-enforced security restriction with no JS workaround.
 | Session support | `<url>/s/:id` opens a named session; `<url>` redirects to the last-used session or creates `main` if none exists | [ADR 005](../adrs/005.client.session-support.md) | ✅ |
 | Welcome banner | Shown on first connection to a session; identifies app, slogan, and help command | [ADR 010](../adrs/010.client.ux-polish.md) | ✅ |
 | Status messages | Consistent `[ webtty ]`-prefixed dim italic messages for disconnect, error, and server stop events | [ADR 010](../adrs/010.client.ux-polish.md) | ✅ |
+| Copy behavior | `copyOnSelect` + `rightClickBehavior` — two independent configurable copy modes | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |

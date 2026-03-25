@@ -112,7 +112,7 @@ All keys are optional — omit any key to use the default value.
 | `rows` | number | `24` | Initial terminal height in rows |
 | `cursorBlink` | boolean | `true` | Whether the cursor blinks |
 | `copyOnSelect` | boolean | `true` | Auto-copy selection to clipboard on mouseup (kitty / Windows Terminal style) |
-| `rightClickBehavior` | string | `"copyPaste"` | Right-click behavior: `"copyPaste"` copies selection + clears it if selection exists, otherwise native menu; `"default"` always shows native context menu |
+| `rightClickBehavior` | string | `"default"` | Right-click behavior: `"copyPaste"` copies selection + clears it if selection exists, otherwise native menu; `"default"` always shows native context menu. Invalid values fall back to `"default"` |
 | `fontSize` | number | `13` | Font size in px |
 | `fontFamily` | string | `"Menlo, Consolas, 'DejaVu Sans Mono', monospace"` | CSS font-family stack |
 | `theme` | object | Campbell | Terminal color palette — see theme keys below |
@@ -158,6 +158,8 @@ All theme keys are optional; omitted keys fall back to the Campbell (Windows Ter
   "cols": 80,
   "rows": 24,
   "cursorBlink": true,
+  "copyOnSelect": true,
+  "rightClickBehavior": "default",
   "fontSize": 13,
   "fontFamily": "Menlo, Consolas, 'DejaVu Sans Mono', monospace",
 
@@ -197,3 +199,4 @@ All theme keys are optional; omitted keys fall back to the Campbell (Windows Ter
 | Terminal appearance | `cols`, `rows`, `fontSize`, `fontFamily`, `cursorBlink` injected into client HTML | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
 | `theme` | Terminal color palette injected into client HTML | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
 | Hot config reload | Appearance re-read on tab reload; shell/PTY settings re-read on new PTY spawn; `port`/`host` locked for server lifetime | [ADR 009](../adrs/009.webtty.config-hot-reload.md) | ✅ |
+| Copy behavior | `copyOnSelect` + `rightClickBehavior` — configurable clipboard copy matching VS Code / kitty conventions | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
