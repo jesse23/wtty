@@ -92,7 +92,7 @@ spawn PTY with fresh: shell, term, colorTerm, scrollback
 - **Env overrides**: `PORT` overrides `config.port` at runtime. Applied after file load, never written back.
 - **Hot config reload**:
   - `port` / `host` — locked at startup (server socket already bound; restart required).
-  - `cols`, `rows`, `fontSize`, `fontFamily`, `cursorBlink`, `scrollback`, `theme`, `copyOnSelect`, `rightClickBehavior` — re-read on every tab reload.
+  -   `cols`, `rows`, `fontSize`, `fontFamily`, `cursorBlink`, `scrollback`, `theme`, `copyOnSelect`, `rightClickBehavior` — re-read on every tab reload.
   - `shell`, `term`, `colorTerm`, `scrollback` — re-read when a new PTY is spawned (i.e. first connection to a session that has no running shell).
   - An already-running session is never affected mid-flight.
 
@@ -113,6 +113,7 @@ All keys are optional — omit any key to use the default value.
 | `cursorBlink` | boolean | `true` | Whether the cursor blinks |
 | `copyOnSelect` | boolean | `true` | Auto-copy selection to clipboard on mouseup (kitty / Windows Terminal style) |
 | `rightClickBehavior` | string | `"default"` | Right-click behavior: `"copyPaste"` copies selection + clears it if selection exists, otherwise native menu; `"default"` always shows native context menu. Invalid values fall back to `"default"` |
+| `logs` | boolean | `false` | Write server stdout/stderr to `~/.config/webtty/server.log`. Appends on each start. Default `false` — server runs silently. |
 | `fontSize` | number | `13` | Font size in px |
 | `fontFamily` | string | `"Menlo, Consolas, 'DejaVu Sans Mono', monospace"` | CSS font-family stack |
 | `theme` | object | Campbell | Terminal color palette — see theme keys below |
@@ -197,3 +198,4 @@ All theme keys are optional; omitted keys fall back to the Campbell (Windows Ter
 | Terminal appearance | `cols`, `rows`, `fontSize`, `fontFamily`, `cursorBlink`, `scrollback`, `theme` — re-read on tab reload | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
 | Hot config reload | Appearance re-read on tab reload; shell/PTY settings re-read on new PTY spawn; `port`/`host` locked for server lifetime | [ADR 009](../adrs/009.webtty.config-hot-reload.md) | ✅ |
 | Copy behavior | `copyOnSelect` + `rightClickBehavior` — configurable clipboard copy matching VS Code / kitty conventions | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
+| Server logs | `logs: true` appends server stdout/stderr to `~/.config/webtty/server.log` | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |

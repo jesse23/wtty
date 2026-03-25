@@ -1,13 +1,19 @@
 import * as childProcess from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadConfig } from '../config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const PORT = Number(process.env.PORT) || 2346;
 export const BASE_URL = `http://127.0.0.1:${PORT}`;
+
+export function logPath(): string {
+  return path.join(os.homedir(), '.config', 'webtty', 'server.log');
+}
 
 export async function isServerRunning(): Promise<boolean> {
   try {
@@ -28,9 +34,19 @@ export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn
     console.error(`webtty: server entry not found at ${serverEntry}`);
     process.exit(1);
   }
+
+  const config = loadConfig();
+  let stdio: childProcess.SpawnOptions['stdio'] = 'ignore';
+  if (config.logs) {
+    const log = logPath();
+    fs.mkdirSync(path.dirname(log), { recursive: true });
+    const fd = fs.openSync(log, 'a');
+    stdio = ['ignore', fd, fd];
+  }
+
   const child = _spawn(process.execPath, [serverEntry], {
     detached: true,
-    stdio: 'ignore',
+    stdio,
     env: { ...process.env, PORT: String(PORT) },
   });
   child.unref();

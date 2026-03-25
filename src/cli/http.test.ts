@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 const realFetch = globalThis.fetch;
 
@@ -74,7 +76,44 @@ describe('stopServer', () => {
   });
 });
 
+describe('logPath', () => {
+  test('returns path inside ~/.config/webtty/', async () => {
+    const { logPath } = await import('./http');
+    expect(logPath()).toBe(path.join(os.homedir(), '.config', 'webtty', 'server.log'));
+  });
+});
+
 describe('startServer', () => {
+  test('opens log file and passes fd to spawn when logs is true', async () => {
+    const existsSpy = spyOn(fs, 'existsSync').mockReturnValue(true);
+    const mkdirSpy = spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+    const openSpy = spyOn(fs, 'openSync').mockReturnValue(99);
+    const fakeChild = { unref: mock(() => {}) };
+    const spawnMock = mock(() => fakeChild);
+
+    globalThis.fetch = mock(
+      async () => new Response('[]', { status: 200 }),
+    ) as unknown as typeof fetch;
+
+    const configModule = await import('../config');
+    const configSpy = spyOn(configModule, 'loadConfig').mockReturnValue({
+      ...configModule.DEFAULT_CONFIG,
+      logs: true,
+    });
+
+    const { startServer } = await import('./http');
+    await startServer(10000, spawnMock as never);
+
+    const spawnCall = (spawnMock.mock.calls[0] as unknown[])[2] as unknown as { stdio: unknown };
+    expect(spawnCall.stdio).toEqual(['ignore', 99, 99]);
+    expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('server.log'), 'a');
+
+    existsSpy.mockRestore();
+    mkdirSpy.mockRestore();
+    openSpy.mockRestore();
+    configSpy.mockRestore();
+  });
+
   test('exits with error when server entry not found', async () => {
     const existsSpy = spyOn(fs, 'existsSync').mockReturnValue(false);
     const exitSpy = spyOn(process, 'exit').mockImplementation((() => {}) as () => never);
