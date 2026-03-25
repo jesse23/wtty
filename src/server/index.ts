@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { loadConfig } from '../config';
 import { handleRequest } from './routes';
 import { findGhosttyWeb } from './static';
-import { closeAllSessions, createWebSocketServer } from './websocket';
+import { closeAllSessions, createWebSocketServer, setLastSessionClosedHandler } from './websocket';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,6 +32,7 @@ const httpServer = http.createServer((req, res) => {
 });
 
 const wss = createWebSocketServer(httpServer);
+setLastSessionClosedHandler(shutdown);
 
 process.on('SIGINT', () => {
   console.log('\n\nShutting down...');

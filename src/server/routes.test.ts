@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { type ChildProcess, spawn } from 'node:child_process';
+import fs from 'node:fs';
 import net from 'node:net';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -46,12 +48,14 @@ async function waitForServerDown(baseUrl: string, timeout = 3000): Promise<void>
 describe('server — routes', () => {
   let proc: ChildProcess;
   let baseUrl: string;
+  let tmpHome: string;
 
   beforeAll(async () => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'webtty-routes-test-'));
     const port = await getFreePort();
     baseUrl = `http://127.0.0.1:${port}`;
     proc = spawn(process.execPath, [SERVER_ENTRY], {
-      env: { ...process.env, PORT: String(port) },
+      env: { ...process.env, PORT: String(port), HOME: tmpHome },
       stdio: 'ignore',
     });
     await waitForServer(baseUrl);
@@ -59,6 +63,7 @@ describe('server — routes', () => {
 
   afterAll(() => {
     proc.kill();
+    fs.rmSync(tmpHome, { recursive: true, force: true });
   });
 
   test('GET /unknown returns 404', async () => {

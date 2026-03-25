@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { type ChildProcess, spawn } from 'node:child_process';
+import fs from 'node:fs';
 import net from 'node:net';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -71,13 +73,15 @@ describe('websocket', () => {
   let baseUrl: string;
   let wsBase: string;
   let port: number;
+  let tmpHome: string;
 
   beforeAll(async () => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'webtty-ws-test-'));
     port = await getFreePort();
     baseUrl = `http://127.0.0.1:${port}`;
     wsBase = `ws://127.0.0.1:${port}`;
     proc = spawn(process.execPath, [SERVER_ENTRY], {
-      env: { ...process.env, PORT: String(port) },
+      env: { ...process.env, PORT: String(port), HOME: tmpHome },
       stdio: 'ignore',
     });
     await waitForServer(baseUrl);
@@ -85,6 +89,7 @@ describe('websocket', () => {
 
   afterAll(() => {
     proc.kill();
+    fs.rmSync(tmpHome, { recursive: true, force: true });
   });
 
   test('rejects connection for non-existent session with code 4001', async () => {
@@ -201,5 +206,37 @@ describe('websocket', () => {
     await closeWs(ws);
 
     expect(messages.slice(before).join('')).toContain('resize-ok');
+  });
+
+  test('server shuts down when last session exits', async () => {
+    await fetch(`${baseUrl}/api/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'ws-test-last' }),
+    });
+
+    const allSessions = (await fetch(`${baseUrl}/api/sessions`).then((r) => r.json())) as unknown[];
+    for (const s of allSessions as Array<{ id: string }>) {
+      if (s.id !== 'ws-test-last') {
+        await fetch(`${baseUrl}/api/sessions/${encodeURIComponent(s.id)}`, { method: 'DELETE' });
+      }
+    }
+
+    const { ws, messages } = await connectWs(`${wsBase}/ws/ws-test-last?cols=80&rows=24`);
+    await waitForMessages(messages, 1);
+
+    ws.send('exit\n');
+    await new Promise<void>((resolve) => ws.on('close', () => resolve()));
+
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      try {
+        await fetch(`${baseUrl}/api/sessions`);
+        await Bun.sleep(100);
+      } catch {
+        return;
+      }
+    }
+    throw new Error('Server did not shut down after last session exited');
   });
 });
