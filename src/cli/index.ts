@@ -1,7 +1,7 @@
 import { Command, type Help } from 'commander';
 import { registerCommands } from './commands';
 
-const CMDS_WITH_ARGS = new Set(['at', 'rm', 'ls', 'mv']);
+const CMDS_WITH_ARGS = new Set(['go', 'rm', 'ls', 'mv']);
 const CMD_NAME_WIDTH = 'mv'.length;
 
 const program = new Command();
@@ -36,7 +36,7 @@ program
       const usageWidth = 'webtty [command]'.length;
       const usageBlock = [
         helper.styleTitle('Usage:'),
-        `${indent}${helper.styleUsage('webtty'.padEnd(usageWidth))}  ${helper.styleCommandDescription('Attach to main session and open it')}`,
+        `${indent}${helper.styleUsage('webtty'.padEnd(usageWidth))}  ${helper.styleCommandDescription('Open main session in the browser')}`,
         `${indent}${helper.styleUsage('webtty [command]'.padEnd(usageWidth))}  ${helper.styleCommandDescription('Execute a specific command')}`,
         '',
       ];
@@ -77,7 +77,7 @@ program
 registerCommands(program);
 
 program.action(async () => {
-  await program.parseAsync(['at', 'main'], { from: 'user' });
+  await program.parseAsync(['go', 'main'], { from: 'user' });
 });
 
 program.parseAsync(process.argv);

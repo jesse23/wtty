@@ -7,10 +7,12 @@ import { BASE_URL, isServerRunning, openBrowser, startServer, stopServer } from 
 
 export function registerCommands(program: Command): void {
   program
-    .command('at [id]')
+    .command('go [id]')
     .alias('a')
+    .alias('run')
+    .alias('open')
     .alias('attach')
-    .description('Attach to a new or existing session and open it')
+    .description('Open a new or existing session in the browser')
     .action(async (id?: string) => {
       if (!(await isServerRunning())) {
         await startServer();
