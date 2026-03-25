@@ -1,12 +1,20 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { type ChildProcess, spawn } from 'node:child_process';
+import fs from 'node:fs';
 import net from 'node:net';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_ENTRY = path.resolve(__dirname, 'index.ts');
 const SERVER_ENTRY = path.resolve(__dirname, '../server/index.ts');
+
+const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'webtty-cli-test-'));
+
+afterAll(() => {
+  fs.rmSync(tmpHome, { recursive: true, force: true });
+});
 
 function getFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -23,7 +31,7 @@ async function runCli(
   ...args: string[]
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const proc = Bun.spawn([process.execPath, CLI_ENTRY, ...args], {
-    env: { ...process.env, PORT: String(port), WEBTTY_NO_OPEN: '1' },
+    env: { ...process.env, PORT: String(port), WEBTTY_NO_OPEN: '1', HOME: tmpHome },
     stdout: 'pipe',
     stderr: 'pipe',
   });
@@ -125,7 +133,7 @@ describe('cli — session management', () => {
     port = await getFreePort();
     baseUrl = `http://127.0.0.1:${port}`;
     serverProc = spawn(process.execPath, [SERVER_ENTRY], {
-      env: { ...process.env, PORT: String(port) },
+      env: { ...process.env, PORT: String(port), HOME: tmpHome },
       stdio: 'ignore',
     });
     await waitForServer(baseUrl);
@@ -213,7 +221,7 @@ describe('cli — no-arg, help, config', () => {
     port = await getFreePort();
     baseUrl = `http://127.0.0.1:${port}`;
     serverProc = spawn(process.execPath, [SERVER_ENTRY], {
-      env: { ...process.env, PORT: String(port) },
+      env: { ...process.env, PORT: String(port), HOME: tmpHome },
       stdio: 'ignore',
     });
     await waitForServer(baseUrl);

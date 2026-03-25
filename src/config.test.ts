@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -6,17 +6,22 @@ import { DEFAULT_CONFIG, DEFAULT_THEME, loadConfig, saveConfig } from './config'
 
 let tmpDir: string;
 let configPath: string;
-let homedirSpy: ReturnType<typeof spyOn>;
+let origHome: string | undefined;
 
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'webtty-config-test-'));
   configPath = path.join(tmpDir, '.config', 'webtty', 'config.json');
-  homedirSpy = spyOn(os, 'homedir').mockReturnValue(tmpDir);
+  origHome = process.env.HOME;
+  process.env.HOME = tmpDir;
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
-  homedirSpy.mockRestore();
+  if (origHome === undefined) {
+    delete process.env.HOME;
+  } else {
+    process.env.HOME = origHome;
+  }
 });
 
 describe('saveConfig', () => {
