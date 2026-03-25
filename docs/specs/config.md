@@ -63,7 +63,7 @@ loadConfig() — re-read file from disk
    │
    ▼
 render HTML with fresh appearance settings injected:
-cols, rows, fontSize, fontFamily, cursorBlink, scrollback, theme
+cols, rows, fontSize, fontFamily, cursorStyle, cursorStyleBlink, scrollback, theme
 ```
 
 ### New PTY spawn  (first WebSocket connection to a session)
@@ -92,7 +92,7 @@ spawn PTY with fresh: shell, term, colorTerm, scrollback
 - **Env overrides**: `PORT` overrides `config.port` at runtime. Applied after file load, never written back.
 - **Hot config reload**:
   - `port` / `host` — locked at startup (server socket already bound; restart required).
-  -   `cols`, `rows`, `fontSize`, `fontFamily`, `cursorStyle`, `cursorBlink`, `scrollback`, `theme`, `copyOnSelect`, `rightClickBehavior` — re-read on every tab reload.
+  -   `cols`, `rows`, `fontSize`, `fontFamily`, `cursorStyle`, `cursorStyleBlink`, `scrollback`, `theme`, `copyOnSelect`, `rightClickBehavior` — re-read on every tab reload. `cursorStyle` and `cursorStyleBlink` set the startup defaults; apps override them at runtime via DECSCUSR.
   - `shell`, `term`, `colorTerm`, `scrollback` — re-read when a new PTY is spawned (i.e. first connection to a session that has no running shell).
   - An already-running session is never affected mid-flight.
 
@@ -110,8 +110,8 @@ All keys are optional — omit any key to use the default value.
 | `scrollback` | number | `262144` | PTY history buffer in bytes; used for server-side replay on reload/reconnect |
 | `cols` | number | `80` | Initial terminal width in columns |
 | `rows` | number | `24` | Initial terminal height in rows |
-| `cursorStyle` | string | `"bar"` | Default cursor shape: `"bar"` (vertical line), `"block"`, or `"underline"`. Applications can override at runtime via DECSCUSR escape sequences. |
-| `cursorBlink` | boolean | `true` | Whether the cursor blinks |
+| `cursorStyle` | string | `"bar"` | Default cursor shape: `"bar"` (vertical line), `"block"`, or `"underline"`. Apps override at runtime via DECSCUSR — this is the startup default only. |
+| `cursorStyleBlink` | boolean | `true` | Default blink state. Apps override at runtime via DECSCUSR — this is the startup default only. |
 | `copyOnSelect` | boolean | `true` | Auto-copy selection to clipboard on mouseup (kitty / Windows Terminal style) |
 | `rightClickBehavior` | string | `"default"` | Right-click behavior: `"copyPaste"` copies selection + clears it if selection exists, otherwise native menu; `"default"` always shows native context menu. Invalid values fall back to `"default"` |
 | `logs` | boolean | `false` | Write server stdout/stderr to `~/.config/webtty/server.log`. Appends on each start. Default `false` — server runs silently. |
@@ -160,7 +160,7 @@ All theme keys are optional; omitted keys fall back to the Campbell (Windows Ter
   "cols": 80,
   "rows": 24,
   "cursorStyle": "bar",
-  "cursorBlink": true,
+  "cursorStyleBlink": true,
   "copyOnSelect": true,
   "rightClickBehavior": "default",
   "fontSize": 13,
@@ -197,7 +197,7 @@ All theme keys are optional; omitted keys fall back to the Campbell (Windows Ter
 |---------|-------------|-----|-------|
 | Config lifecycle | First-run write, merge with defaults, env overrides, hot-reload on tab reload | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
 | Server settings | `port`, `host` — locked at startup; `shell`, `term`, `colorTerm` — applied per new PTY | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
-| Terminal appearance | `cols`, `rows`, `fontSize`, `fontFamily`, `cursorStyle`, `cursorBlink`, `scrollback`, `theme` — re-read on tab reload | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
+| Terminal appearance | `cols`, `rows`, `fontSize`, `fontFamily`, `cursorStyle`, `cursorStyleBlink`, `scrollback`, `theme` — re-read on tab reload | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
 | Hot config reload | Appearance re-read on tab reload; shell/PTY settings re-read on new PTY spawn; `port`/`host` locked for server lifetime | [ADR 009](../adrs/009.webtty.config-hot-reload.md) | ✅ |
 | Copy behavior | `copyOnSelect` + `rightClickBehavior` — configurable clipboard copy matching VS Code / kitty conventions | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
 | Server logs | `logs: true` appends server stdout/stderr to `~/.config/webtty/server.log` | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |

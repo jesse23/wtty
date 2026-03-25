@@ -64,13 +64,14 @@ export async function handleRequest(
 
   if (req.method === 'GET' && pathname === '/api/config') {
     const config = loadConfig();
+    // Whitelist client-safe keys — avoid exposing server-side config (shell, host, logs, etc.)
     const clientConfig = {
       cols: config.cols,
       rows: config.rows,
       fontSize: config.fontSize,
       fontFamily: config.fontFamily,
       cursorStyle: config.cursorStyle,
-      cursorBlink: config.cursorBlink,
+      cursorStyleBlink: config.cursorStyleBlink,
       scrollback: config.scrollback,
       theme: config.theme,
       copyOnSelect: config.copyOnSelect,

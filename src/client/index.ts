@@ -30,7 +30,7 @@ interface ClientConfig {
   fontSize: number;
   fontFamily: string;
   cursorStyle: 'block' | 'bar' | 'underline';
-  cursorBlink: boolean;
+  cursorStyleBlink: boolean;
   scrollback: number;
   theme: Theme;
   copyOnSelect: boolean;
@@ -48,7 +48,7 @@ const term = new Terminal({
   cols: config.cols,
   rows: config.rows,
   cursorStyle: config.cursorStyle,
-  cursorBlink: config.cursorBlink,
+  cursorBlink: config.cursorStyleBlink,
   fontSize: config.fontSize,
   fontFamily: config.fontFamily,
   scrollback: Math.ceil(config.scrollback / 80),
