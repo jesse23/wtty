@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +15,11 @@ const HTTP_PORT = Number(process.env.PORT) || config.port;
 const HTTP_HOST = config.host;
 
 const { distPath, wasmPath } = findGhosttyWeb();
-const clientDistPath = path.resolve(distPath, '..', '..', '..', 'dist');
+const builtDistPath = path.resolve(distPath, '..', '..', '..', 'dist');
+const srcClientPath = path.resolve(__dirname, '..', 'client');
+const clientDistPath = fs.existsSync(path.join(builtDistPath, 'client.html'))
+  ? builtDistPath
+  : srcClientPath;
 
 function shutdown() {
   closeAllSessions();

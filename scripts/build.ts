@@ -39,7 +39,7 @@ const clientOut = path.resolve('./dist/client-browser.js');
 const clientJs = fs.readFileSync(clientOut, 'utf8');
 fs.writeFileSync(clientOut, clientJs.replace(/"ghostty-web"/g, '"/dist/ghostty-web.js"'));
 
-fs.copyFileSync(path.resolve('./src/client/index.html'), path.resolve('./dist/client.html'));
+fs.copyFileSync(path.resolve('./src/client/client.html'), path.resolve('./dist/client.html'));
 fs.copyFileSync(path.resolve('./src/client/index.css'), path.resolve('./dist/client.css'));
 
 const totalFiles = serverResult.outputs.length + clientResult.outputs.length + 2;
