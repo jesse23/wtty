@@ -242,13 +242,15 @@ describe('cli — no-arg, help, config', () => {
     expect(stdout).toContain('webtty');
   });
 
-  test('config opens config path in $EDITOR', async () => {
+  test('config opens config path in $VISUAL', async () => {
     const os = await import('node:os');
     const path = await import('node:path');
     const expectedPath = path.join(os.homedir(), '.config', 'webtty', 'config.json');
 
+    const env: Record<string, string> = { ...process.env, PORT: String(port), VISUAL: 'echo' };
+    delete env.EDITOR;
     const proc = Bun.spawn([process.execPath, CLI_ENTRY, 'config'], {
-      env: { ...process.env, PORT: String(port), EDITOR: 'echo' },
+      env,
       stdout: 'pipe',
       stderr: 'pipe',
     });

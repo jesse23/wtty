@@ -183,7 +183,7 @@ export function registerCommands(program: Command): void {
     .description('Open the config file in $EDITOR')
     .action(() => {
       const configPath = path.join(os.homedir(), '.config', 'webtty', 'config.json');
-      const editor = process.env.EDITOR ?? process.env.VISUAL ?? 'vi';
+      const editor = process.env.VISUAL ?? process.env.EDITOR ?? 'vi';
       childProcess.spawnSync(editor, [configPath], { stdio: 'inherit' });
     });
 
