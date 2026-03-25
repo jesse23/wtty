@@ -155,6 +155,21 @@ describe('loadConfig — reads and merges', () => {
     expect(config.host).toBe(DEFAULT_CONFIG.host);
   });
 
+  test('overrides copyOnSelect when set to false', () => {
+    writeConfig(JSON.stringify({ copyOnSelect: false }));
+    expect(loadConfig().copyOnSelect).toBe(false);
+  });
+
+  test('overrides rightClickBehavior when set to copyPaste', () => {
+    writeConfig(JSON.stringify({ rightClickBehavior: 'copyPaste' }));
+    expect(loadConfig().rightClickBehavior).toBe('copyPaste');
+  });
+
+  test('falls back rightClickBehavior to default for invalid value', () => {
+    writeConfig(JSON.stringify({ rightClickBehavior: 'bogus' }));
+    expect(loadConfig().rightClickBehavior).toBe('default');
+  });
+
   test('throws on invalid JSON', () => {
     writeConfig('{ not valid json }');
     expect(() => loadConfig()).toThrow(/invalid JSON/);

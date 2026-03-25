@@ -39,11 +39,12 @@ async function waitForServer(baseUrl: string, timeout = 5000): Promise<boolean> 
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     try {
-      await fetch(`${baseUrl}/api/sessions`);
-      return true;
+      const res = await fetch(`${baseUrl}/api/sessions`);
+      if (res.ok && Array.isArray(await res.json())) return true;
     } catch {
-      await Bun.sleep(100);
+      /* empty */
     }
+    await Bun.sleep(100);
   }
   return false;
 }
@@ -107,20 +108,10 @@ describe('cli — lifecycle', () => {
     expect(stdout).toBe('webtty is not running');
   });
 
-  test('restart starts the server when not running', async () => {
-    const { stdout, exitCode } = await runCli(port, 'restart');
+  test('start launches server after stop', async () => {
+    const { stdout, exitCode } = await runCli(port, 'start');
     expect(exitCode).toBe(0);
-    expect(stdout).toBe('webtty restarted');
-    expect(await waitForServer(baseUrl)).toBe(true);
-  });
-
-  test('restart stops and restarts a running server', async () => {
-    const resBefore = await fetch(`${baseUrl}/api/sessions`);
-    expect(resBefore.ok).toBe(true);
-
-    const { stdout, exitCode } = await runCli(port, 'restart');
-    expect(exitCode).toBe(0);
-    expect(stdout).toBe('webtty restarted');
+    expect(stdout).toBe('webtty started');
     expect(await waitForServer(baseUrl)).toBe(true);
   });
 });
@@ -151,7 +142,7 @@ describe('cli — session management', () => {
   });
 
   test('run creates a session and prints url', async () => {
-    const { stdout, exitCode } = await runCli(port, 'run', 'my-session');
+    const { stdout, exitCode } = await runCli(port, 'at', 'my-session');
     expect(exitCode).toBe(0);
     expect(stdout).toContain(`/s/my-session`);
 
@@ -160,13 +151,13 @@ describe('cli — session management', () => {
   });
 
   test('run with existing id reuses session without error', async () => {
-    const { stdout, exitCode } = await runCli(port, 'run', 'my-session');
+    const { stdout, exitCode } = await runCli(port, 'at', 'my-session');
     expect(exitCode).toBe(0);
     expect(stdout).toContain(`/s/my-session`);
   });
 
   test('run without id creates session with auto-generated id', async () => {
-    const { stdout, exitCode } = await runCli(port, 'run');
+    const { stdout, exitCode } = await runCli(port, 'at');
     expect(exitCode).toBe(0);
     expect(stdout).toMatch(/\/s\/[a-f0-9]{8}/);
   });
@@ -178,7 +169,7 @@ describe('cli — session management', () => {
   });
 
   test('rename renames a session', async () => {
-    const { stdout, exitCode } = await runCli(port, 'rename', 'my-session', 'renamed-session');
+    const { stdout, exitCode } = await runCli(port, 'mv', 'my-session', 'renamed-session');
     expect(exitCode).toBe(0);
     expect(stdout).toContain('renamed');
     expect(stdout).toContain('renamed-session');
@@ -188,7 +179,7 @@ describe('cli — session management', () => {
   });
 
   test('rename non-existent session exits with error', async () => {
-    const { exitCode, stderr } = await runCli(port, 'rename', 'does-not-exist', 'new-name');
+    const { exitCode, stderr } = await runCli(port, 'mv', 'does-not-exist', 'new-name');
     expect(exitCode).toBe(1);
     expect(stderr).toContain('not found');
   });
@@ -247,7 +238,7 @@ describe('cli — no-arg, help, config', () => {
   test('help prints usage', async () => {
     const { stdout, exitCode } = await runCli(port, 'help');
     expect(exitCode).toBe(0);
-    expect(stdout).toContain('Usage:');
+    expect(stdout).toContain('USAGE');
     expect(stdout).toContain('webtty');
   });
 
