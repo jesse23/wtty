@@ -30,7 +30,7 @@ The CLI communicates with the server exclusively over HTTP to localhost — no U
 | `webtty stop` | `POST /api/server/stop` — server cleans up and exits. Alias: `down` |
 | `webtty start` | Fork server, wait for `GET /api/sessions` to respond |
 | `webtty` | No-arg entry point — start server if not running, then delegate to `webtty at main` |
-| `webtty config` | Open `~/.config/webtty/config.json` in `$VISUAL` (falls back to `$EDITOR`, then `vi`) |
+| `webtty config` | Open `~/.config/webtty/config.json` in `$VISUAL` (falls back to `$EDITOR`, then `vi` on Unix / `notepad` on Windows) |
 | `webtty help` | Show help — all commands |
 
 ## No-arg entry point
@@ -52,7 +52,7 @@ This makes the welcome banner's call-to-action (`Run \`bunx webtty help\` for mo
 
 `webtty config` opens `~/.config/webtty/config.json` in the user's preferred editor:
 
-1. Resolve editor: `$VISUAL` → `$EDITOR` → `vi`
+1. Resolve editor: `$VISUAL` → `$EDITOR` → `vi` (Unix) / `notepad` (Windows)
 2. Ensure the config file exists (first-run write happens on server startup, but `webtty config` may run before the server has ever started)
 3. Spawn the editor with the config path, inheriting stdio so the terminal is fully handed off
 
