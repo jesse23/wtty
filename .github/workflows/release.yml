@@ -20,8 +20,13 @@ jobs:
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: bun install --frozen-lockfile
       - run: bun run build
+      - name: Strip dev scripts before publish
+        run: bun scripts/clean-pkg-scripts.ts strip
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bunx semantic-release
+      - name: Restore dev scripts after publish
+        if: always()
+        run: bun scripts/clean-pkg-scripts.ts restore
