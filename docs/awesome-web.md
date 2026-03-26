@@ -16,34 +16,60 @@ Pick one, stick with it. Cross-device sync matters more than features.
 
 | Browser | Why Pick It |
 |---------|------------|
-| **Vivaldi** | Most customizable, power users, tab stacking |
-| **Edge** | Best Windows integration, solid dev tools, built-in sidebar apps |
-| **Chrome** | Widest compatibility, best DevTools |
-| **Firefox** | Privacy-first, strong extension ecosystem |
+| **[Vivaldi](https://vivaldi.com)** | Most customizable — hide the address bar entirely for a minimal, distraction-free UI |
+| **[Arc](https://arc.net)** | Minimal by default — no tab bar, no address bar, sidebar-first |
+| **[Zen](https://zen-browser.app)** | Same minimal philosophy as Arc, open source |
+| **[Edge](https://microsoft.com/edge)** | Enable vertical tab bar to collapse the top area to a single line |
+| **[Chrome](https://google.com/chrome)** | Enable vertical tab bar to collapse the top area to a single line |
 
 ### Productivity Suite
 
 #### Google Workspace
 
-Google was the first to push the browser-first model seriously. Docs, Sheets, Slides, Meet, Gmail — all web-native from the start. Still the gold standard for real-time collaboration.
+Google was the first to push the browser-first model seriously. All web-native from the start, still the gold standard for real-time collaboration.
+
+- [Gmail](https://mail.google.com)
+- [Docs](https://docs.google.com)
+- [Sheets](https://sheets.google.com)
+- [Slides](https://slides.google.com)
+- [Drive](https://drive.google.com)
+- [Meet](https://meet.google.com)
+- [Calendar](https://calendar.google.com)
 
 If you're starting fresh or don't have org constraints, Google Workspace is the easiest path. Everything syncs, everything works offline, and sharing is built in.
 
 #### Microsoft 365
 
-Office Online has caught up. Word, Excel, PowerPoint in the browser are now good enough for most tasks. OneDrive integration is seamless on Windows. If your org is on M365, lean into it — Teams, Outlook, and the Office apps all work in the browser.
+Office Online has caught up. Word, Excel, PowerPoint in the browser are now good enough for most tasks. If your org is on M365, lean into it — everything works in the browser.
+
+- [Outlook](https://outlook.live.com)
+- [Word](https://word.office.com)
+- [Excel](https://excel.office.com)
+- [PowerPoint](https://powerpoint.office.com)
+- [OneDrive](https://onedrive.live.com)
+- [Teams](https://teams.microsoft.com)
 
 ### Password Manager
 
-**Bitwarden** — open source, browser extension works everywhere, self-hostable if you want. **1Password** is the premium alternative with better UX. Both work purely in the browser with no native app required.
-
-Pick one and stop managing passwords in your head.
+**[KeeWeb](https://keeweb.info)** — KeePass-compatible, open source, works as an offline web app with no install. Syncs your `.kdbx` file via Dropbox, Google Drive, OneDrive, or your own server. Desktop apps available too if you want them.
 
 ### IDE
 
-VS Code has a server mode (code-server, vscode.dev, GitHub Codespaces). Run the server anywhere, connect from any browser. Full LSP, extensions, terminal — same editor, no install on the client.
+VS Code has three browser modes — they're different products, often confused:
 
-If you're on GitHub, Codespaces is the easiest path. For self-hosted, code-server on a VPS or local machine works well. You get the full VS Code experience without touching your local machine's filesystem.
+**[VS Code `serve-web`](https://code.visualstudio.com/docs/remote/vscode-server)** — Run `code serve-web` on your machine, open the URL in any browser on your network. Fully self-hosted, no Microsoft infrastructure involved. Full VS Code with terminal, extensions, and debugger. Best for local network access from a tablet or secondary device.
+
+**[code-server](https://github.com/coder/code-server)** — Open source, self-hosted VS Code server by Coder. Same idea as `serve-web` but community-driven, more deployment options, and multi-user capable. Total control over your setup.
+
+**[vscode.dev](https://vscode.dev)** — Runs entirely in your browser, no server needed. Zero setup, works on any device. Opens GitHub repos directly (`vscode.dev/github/<org>/<repo>`). No terminal, no debugger, and many extensions don't work because there's no backend to run them on.
+
+| | `serve-web` | code-server | vscode.dev |
+|--|-------------|-------------|------------|
+| Terminal | ✅ | ✅ | ❌ |
+| Self-hosted | ✅ | ✅ | ❌ |
+| Extensions | ✅ full | ✅ full | ⚠️ limited |
+| Setup | Easy | Medium | None |
+| Best for | Local network | Self-hosted teams | Quick browsing |
 
 ### Terminal
 
