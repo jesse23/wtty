@@ -32,7 +32,8 @@ describe('spawnForSession', () => {
     const received: string[] = [];
     pty.onData((data) => received.push(data));
 
-    await waitForData(received, '$');
+    pty.write('echo __ready__\n');
+    await waitForData(received, '__ready__');
     pty.write('echo hello-pty\n');
     await waitForData(received, 'hello-pty');
     pty.write('exit\n');
