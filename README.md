@@ -2,6 +2,9 @@
 
 # webtty
 
+[![npm version](https://img.shields.io/npm/v/webtty)](https://www.npmjs.com/package/webtty)
+[![CI](https://github.com/jesse23/webtty/actions/workflows/ci.yml/badge.svg)](https://github.com/jesse23/webtty/actions/workflows/ci.yml)
+
 Terminal UI in the browser. Run CLI/TUI applications in a browser tab, across platforms. Powered by [ghostty-web](https://github.com/coder/ghostty-web).
 
 - [Why webtty?](docs/awesome-web.md#terminal)
