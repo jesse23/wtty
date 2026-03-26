@@ -1,6 +1,5 @@
 import { FitAddon, init, Terminal } from 'ghostty-web';
 import { applyDecscusr } from './cursor';
-import { shouldForwardPaste } from './paste';
 
 interface Theme {
   background?: string;
@@ -109,22 +108,26 @@ function connect(): void {
 
 connect();
 
+// Forward terminal keystrokes and input to the PTY over WebSocket.
 term.onData((data: string) => {
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(data);
   }
 });
 
+// Notify the server when the terminal is resized so the PTY dimensions stay in sync.
 term.onResize(({ cols, rows }: { cols: number; rows: number }) => {
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: 'resize', cols, rows }));
   }
 });
 
+// Refit the terminal whenever the browser window is resized.
 window.addEventListener('resize', () => {
   fitAddon.fit();
 });
 
+// Copy the selected text to the clipboard whenever the selection changes.
 if (config.copyOnSelect) {
   term.onSelectionChange(() => {
     const selection = term.getSelection() as string;
@@ -135,6 +138,7 @@ if (config.copyOnSelect) {
   });
 }
 
+// Copy selected text to clipboard on right-click when copyPaste mode is active.
 if (config.rightClickBehavior === 'copyPaste') {
   container.addEventListener('contextmenu', (e: MouseEvent) => {
     const selection = term.getSelection() as string;
@@ -156,7 +160,7 @@ container.addEventListener(
   (e: ClipboardEvent) => {
     const cd = e.clipboardData;
     if (!cd) return;
-    if (!shouldForwardPaste(cd)) return;
+    if (cd.getData('text/plain')) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     if (ws && ws.readyState === WebSocket.OPEN) {
