@@ -20,6 +20,8 @@ npx webtty go [id]
 npx webtty help
 ```
 
+> **Windows**: use `npx` — `bunx` is not supported on Windows because `Bun.spawn({ terminal })` does not implement PTY on Windows yet.
+
 ## Development
 
 Build emits source maps (`dist/**/*.js.map`), so you can debug against the built output directly — no minification, original TypeScript line numbers preserved.
