@@ -1,5 +1,6 @@
 import { FitAddon, init, Terminal } from 'ghostty-web';
 import { applyDecscusr } from './cursor';
+import { shouldForwardPaste } from './paste';
 
 interface Theme {
   background?: string;
@@ -155,7 +156,7 @@ container.addEventListener(
   (e: ClipboardEvent) => {
     const cd = e.clipboardData;
     if (!cd) return;
-    if (cd.getData('text/plain')) return;
+    if (!shouldForwardPaste(cd)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     if (ws && ws.readyState === WebSocket.OPEN) {
