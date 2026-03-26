@@ -9,10 +9,12 @@ Terminal UI in the browser. Run CLI/TUI applications in a browser tab, across pl
 ```sh
 bunx webtty                # open main session in the browser
 bunx webtty go [id]        # open a specific session by id
+bunx webtty help           # show all commands
 
 # or with npx
 npx webtty
 npx webtty go [id]
+npx webtty help
 ```
 
 ## Development
