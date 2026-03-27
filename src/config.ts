@@ -42,6 +42,7 @@ export interface Config {
   cursorStyleBlink: boolean;
   copyOnSelect: boolean;
   rightClickBehavior: RightClickBehavior;
+  mouseScrollSpeed: number;
   logs: boolean;
   theme: Theme;
 }
@@ -95,6 +96,7 @@ export const DEFAULT_CONFIG: Config = {
   cursorStyleBlink: true,
   copyOnSelect: true,
   rightClickBehavior: 'default' as RightClickBehavior,
+  mouseScrollSpeed: 1,
   logs: false,
   theme: DEFAULT_THEME,
 };
@@ -151,6 +153,8 @@ export function loadConfig(): Config {
         ? 'copyPaste'
         : 'default') as RightClickBehavior,
     }),
+    ...(typeof p.mouseScrollSpeed === 'number' &&
+      p.mouseScrollSpeed > 0 && { mouseScrollSpeed: p.mouseScrollSpeed }),
     ...(typeof p.logs === 'boolean' && { logs: p.logs }),
     ...(p.theme && typeof p.theme === 'object' && { theme: { ...DEFAULT_THEME, ...p.theme } }),
   };
