@@ -51,6 +51,14 @@ describe('loadConfig — first run', () => {
     expect(fs.existsSync(configPath)).toBe(true);
   });
 
+  test('DEFAULT_CONFIG.term is xterm-256color regardless of $TERM env', () => {
+    const saved = process.env.TERM;
+    process.env.TERM = 'alacritty';
+    expect(DEFAULT_CONFIG.term).toBe('xterm-256color');
+    if (saved === undefined) delete process.env.TERM;
+    else process.env.TERM = saved;
+  });
+
   test('returns config that equals DEFAULT_CONFIG after first run', () => {
     const config = loadConfig();
     expect(config.port).toBe(DEFAULT_CONFIG.port);

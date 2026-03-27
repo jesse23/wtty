@@ -1,7 +1,7 @@
 # SPEC: Config
 
 **Author:** jesse23
-**Last Updated:** 2026-03-24
+**Last Updated:** 2026-03-27
 
 ---
 
@@ -106,7 +106,7 @@ All keys are optional — omit any key to use the default value.
 | `port` | number | `2346` | HTTP listen port; env `PORT` takes precedence |
 | `host` | string | `"127.0.0.1"` | Bind address; use `"0.0.0.0"` for remote access |
 | `shell` | string | `$SHELL` / `%COMSPEC%` | Shell for new sessions |
-| `term` | string | `$TERM` | `$TERM` env var passed to the shell |
+| `term` | string | `"xterm-256color"` | `$TERM` env var passed to the shell. Fixed to `xterm-256color` — the PTY child talks to webtty, not to the parent terminal. See [ADR 016](../adrs/016.config.term-default.md). |
 | `colorTerm` | string | `"truecolor"` | `$COLORTERM` env var passed to the shell |
 | `scrollback` | number | `262144` | PTY history buffer in bytes; used for server-side replay on reload/reconnect |
 | `cols` | number | `80` | Initial terminal width in columns |
@@ -197,7 +197,7 @@ All theme keys are optional; omitted keys fall back to the Campbell (Windows Ter
 | Feature | Description | ADR | Done? |
 |---------|-------------|-----|-------|
 | Config lifecycle | First-run write, merge with defaults, env overrides, hot-reload on tab reload | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
-| Server settings | `port`, `host` — locked at startup; `shell`, `term`, `colorTerm` — applied per new PTY | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
+| Server settings | `port`, `host` — locked at startup; `shell`, `term`, `colorTerm` — applied per new PTY. `term` defaults to `xterm-256color` (not inherited from parent process) | [ADR 008](../adrs/008.webtty.config.md), [ADR 016](../adrs/016.config.term-default.md) | ✅ |
 | Terminal appearance | `cols`, `rows`, `fontSize`, `fontFamily`, `cursorStyle`, `cursorStyleBlink`, `scrollback`, `theme` — re-read on tab reload | [ADR 008](../adrs/008.webtty.config.md) | ✅ |
 | Hot config reload | Appearance re-read on tab reload; shell/PTY settings re-read on new PTY spawn; `port`/`host` locked for server lifetime | [ADR 009](../adrs/009.webtty.config-hot-reload.md) | ✅ |
 | Copy behavior | `copyOnSelect` + `rightClickBehavior` — configurable clipboard copy matching VS Code / kitty conventions | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |

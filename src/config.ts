@@ -84,7 +84,7 @@ export const DEFAULT_CONFIG: Config = {
     process.platform === 'win32'
       ? (process.env.COMSPEC ?? 'cmd.exe')
       : (process.env.SHELL ?? '/bin/bash'),
-  term: process.env.TERM ?? 'xterm-256color',
+  term: 'xterm-256color',
   colorTerm: 'truecolor',
   scrollback: 256 * 1024,
   cols: 80,
