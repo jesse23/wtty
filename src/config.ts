@@ -28,22 +28,39 @@ export interface Theme {
 export type RightClickBehavior = 'default' | 'copyPaste';
 
 export interface Config {
+  /** HTTP listen port; env `PORT` takes precedence. */
   port: number;
+  /** Bind address; use `"0.0.0.0"` for remote access. */
   host: string;
+  /** Shell for new sessions. */
   shell: string;
+  /** `$TERM` env var passed to the shell. Fixed to `xterm-256color` — the PTY child talks to webtty, not to the parent terminal. */
   term: string;
+  /** `$COLORTERM` env var passed to the shell. */
   colorTerm: string;
+  /** PTY history buffer in bytes; used for server-side replay on reload/reconnect. */
   scrollback: number;
+  /** Initial terminal width in columns. */
   cols: number;
+  /** Initial terminal height in rows. */
   rows: number;
+  /** Font size in px. */
   fontSize: number;
+  /** CSS font-family stack. */
   fontFamily: string;
+  /** Default cursor shape. Apps override at runtime via DECSCUSR — this is the startup default only. */
   cursorStyle: 'block' | 'bar' | 'underline';
+  /** Default blink state. Apps override at runtime via DECSCUSR — this is the startup default only. */
   cursorStyleBlink: boolean;
+  /** Auto-copy selection to clipboard on mouseup (kitty / Windows Terminal style). */
   copyOnSelect: boolean;
+  /** `"copyPaste"` copies selection + clears it on right-click if selection exists; `"default"` always shows native context menu. */
   rightClickBehavior: RightClickBehavior;
+  /** Mouse wheel scroll speed multiplier for apps with mouse tracking. `1` = one SGR per tick. Values `< 1` reduce rate; values `> 1` send multiple SGRs per tick. Must be `> 0`. */
   mouseScrollSpeed: number;
+  /** Write server stdout/stderr to `~/.config/webtty/server.log`. Appends on each start. */
   logs: boolean;
+  /** Terminal color palette. */
   theme: Theme;
 }
 
