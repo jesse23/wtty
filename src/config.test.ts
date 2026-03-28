@@ -230,20 +230,31 @@ describe('loadConfig — keyboardBindings', () => {
 
   test('multiple user bindings are all preserved', () => {
     writeConfig(
-      JSON.stringify({ keyboardBindings: [{ key: 'enter', mods: ['ctrl'], chars: '\x1b\r' }] }),
+      JSON.stringify({
+        keyboardBindings: [
+          { key: 'enter', mods: ['ctrl'], chars: '\u001b[13;5u' },
+          { key: 'tab', mods: ['shift'], chars: '\u001b[9;2u' },
+        ],
+      }),
     );
     const bindings = loadConfig().keyboardBindings;
-    expect(bindings).toHaveLength(1);
-    expect(bindings[0].mods).toEqual(['ctrl']);
+    expect(bindings).toHaveLength(2);
+    expect(bindings.some((b) => b.key === 'enter' && b.mods?.includes('ctrl'))).toBe(true);
+    expect(bindings.some((b) => b.key === 'tab' && b.mods?.includes('shift'))).toBe(true);
   });
 
-  test('mods order does not affect identity — ["shift"] and [] are different', () => {
+  test('mods order does not affect identity — ["ctrl","shift"] matches ["shift","ctrl"]', () => {
     writeConfig(
-      JSON.stringify({ keyboardBindings: [{ key: 'enter', mods: ['shift'], chars: '' }] }),
+      JSON.stringify({
+        keyboardBindings: [
+          { key: 'enter', mods: ['ctrl', 'shift'], chars: 'first' },
+          { key: 'enter', mods: ['shift', 'ctrl'], chars: 'last-wins' },
+        ],
+      }),
     );
     const bindings = loadConfig().keyboardBindings;
     expect(bindings).toHaveLength(1);
-    expect(bindings[0].chars).toBe('');
+    expect(bindings[0].chars).toBe('last-wins');
   });
 
   test('entries missing key or chars are silently ignored', () => {
@@ -254,6 +265,21 @@ describe('loadConfig — keyboardBindings', () => {
   test('non-array keyboardBindings is ignored, defaults preserved', () => {
     writeConfig(JSON.stringify({ keyboardBindings: 'invalid' }));
     expect(loadConfig().keyboardBindings).toEqual(DEFAULT_KEYBOARD_BINDINGS);
+  });
+
+  test('binding with non-array mods is rejected', () => {
+    writeConfig(JSON.stringify({ keyboardBindings: [{ key: 'enter', chars: 'x', mods: {} }] }));
+    expect(loadConfig().keyboardBindings).toEqual([]);
+  });
+
+  test('unknown mods are filtered out at load time', () => {
+    writeConfig(
+      JSON.stringify({
+        keyboardBindings: [{ key: 'enter', mods: ['shift', 'super', 'unknown'], chars: 'x' }],
+      }),
+    );
+    const bindings = loadConfig().keyboardBindings;
+    expect(bindings[0].mods).toEqual(['shift']);
   });
 });
 

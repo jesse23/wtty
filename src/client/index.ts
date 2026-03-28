@@ -166,7 +166,7 @@ container.addEventListener(
     ]);
     const binding = config.keyboardBindings.find((b) => {
       if (b.key.toLowerCase() !== key) return false;
-      const required = new Set((b.mods ?? []).map((m) => m.toLowerCase()));
+      const required = new Set((Array.isArray(b.mods) ? b.mods : []).map((m) => m.toLowerCase()));
       if (required.size !== active.size) return false;
       for (const m of required) if (!active.has(m)) return false;
       return true;

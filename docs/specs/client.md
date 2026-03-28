@@ -103,12 +103,12 @@ Browser `KeyboardEvent` objects do not carry terminal escape sequences — the b
 
 A capture-phase `keydown` listener on the terminal container fires before ghostty-web's canvas handlers and intercepts matching bindings:
 
-1. Walk `config.keyboardBindings` (built-in defaults merged with user overrides).
-2. Normalize `event.key` and compare against each binding's `key`+`mods`.
-3. On match: call `e.preventDefault()` + `e.stopPropagation()` to suppress ghostty-web's default handling, then send `binding.chars` over WebSocket to the PTY.
+1. Walk `config.keyboardBindings` (user-configured entries).
+2. Normalize `event.key` to lowercase and compare against each binding's `key`+`mods`.
+3. On match: call `e.preventDefault()` + `e.stopPropagation()` to suppress ghostty-web's default handling, then send `binding.chars` verbatim over WebSocket to the PTY.
 4. No match: return immediately — ghostty-web handles as normal.
 
-**`chars` preprocessing:** Before sending, webtty expands `\xNN` hex escapes in the `chars` string (e.g. `"\x1b\r"` → `ESC CR`). Standard JSON escapes (`\uXXXX`, `\r`, `\n`, `\t`) pass through unchanged because JSON.parse already resolves them on config load.
+**`chars` encoding:** The client sends `binding.chars` verbatim. Standard JSON escapes (`\uXXXX`, `\r`, `\n`, `\t`) are resolved by `JSON.parse` at config load — no further processing occurs.
 
 See [config SPEC](config.md#keyboard-binding-objects) for the binding object schema and built-in defaults.
 
@@ -148,4 +148,4 @@ When a session ends (shell exits → WS close code `4001`) or the server stops (
 | Cursor style | `cursorStyle` / `cursorStyleBlink` defaults; DECSCUSR from PTY overrides at runtime via client-side intercept | [ADR 013](../adrs/013.client.cursor-style.md) | ✅ |
 | Non-text paste | Ctrl+V with no `text/plain` in clipboard forwards `\x16` to PTY; TUI apps read non-text content via their native OS clipboard API | [ADR 014](../adrs/014.client.image-paste.md) | ✅ |
 | Mouse scroll | When the PTY app enables mouse tracking (e.g. vim `set mouse=a`), wheel events are forwarded as SGR mouse sequences (`\x1b[<64/65;col;rowM`) instead of arrow keys, so apps scroll their buffer rather than move the cursor | [ADR 017](../adrs/017.client.mouse-scroll.md) | ✅ |
-| Keyboard bindings | Capture-phase `keydown` handler intercepts configured `key`+`mods` combos and sends `chars` to PTY before ghostty-web sees the event. Built-in default: Shift+Enter → `\x1b\r` | [ADR 018](../adrs/018.client.keyboard-bindings.md) | ⬜ |
+| Keyboard bindings | Capture-phase `keydown` handler intercepts configured `key`+`mods` combos and sends `chars` to PTY; defaults to `[]` (no built-in bindings) | [ADR 018](../adrs/018.client.keyboard-bindings.md) | ✅ |

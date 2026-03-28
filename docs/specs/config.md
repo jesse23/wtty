@@ -156,7 +156,7 @@ Each entry in `keyboardBindings` is an object with the following fields:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `key` | string | yes | Key name, matched case-insensitively against `KeyboardEvent.key`. Special keys: `"enter"`, `"escape"`, `"tab"`, `"backspace"`, `"delete"`, `"space"`, `"arrowup"`, `"arrowdown"`, `"arrowleft"`, `"arrowright"`, `"f1"`–`"f12"`. Printable characters: `"a"`–`"z"`, `"0"`–`"9"`, etc. |
-| `mods` | string[] | no | Array of modifier names. Accepted values: `"shift"`, `"ctrl"`, `"alt"`, `"meta"`. Examples: `["shift"]`, `["ctrl", "shift"]`. Omit or `[]` for no modifiers. Order does not matter — `["ctrl", "shift"]` and `["shift", "ctrl"]` are equivalent. Unknown values are silently ignored. |
+| `mods` | string[] | no | Array of modifier names. Accepted values: `"shift"`, `"ctrl"`, `"alt"`, `"meta"`. Unknown values are silently filtered out at config load time. Examples: `["shift"]`, `["ctrl", "shift"]`. Omit or `[]` for no modifiers. Order does not matter — `["ctrl", "shift"]` and `["shift", "ctrl"]` are equivalent. |
 | `chars` | string | yes | Escape sequence sent verbatim to the PTY. Must be a valid JSON string — use `\uXXXX` for non-printable bytes (e.g. `"\u001b"` for ESC). `\x` hex notation is **not valid JSON** and will cause a parse error. Standard escapes `\r`, `\n`, `\t` work as expected. All escapes are resolved by `JSON.parse` at config load; the string is sent as-is with no further processing. |
 
 #### How to define `chars`

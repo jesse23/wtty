@@ -6,7 +6,7 @@ import path from 'node:path';
 export interface KeyboardBinding {
   /** Key name matched case-insensitively against `KeyboardEvent.key` (e.g. `"enter"`, `"arrowup"`, `"a"`). */
   key: string;
-  /** Modifier keys that must be active. Accepted values: `"shift"`, `"ctrl"`, `"alt"`, `"meta"`. Order irrelevant. */
+  /** Modifier keys that must be active — and no others — for this binding to match. Accepted values: `"shift"`, `"ctrl"`, `"alt"`, `"meta"`. Order irrelevant. Unknown values are filtered out at config load time. */
   mods?: string[];
   /** Byte sequence sent verbatim to the PTY. Standard JSON escapes apply (`\r`, `\uXXXX`, etc.). */
   chars: string;
@@ -165,10 +165,22 @@ function bindingKey(b: KeyboardBinding): string {
   return `${b.key.toLowerCase()}|${mods}`;
 }
 
+const VALID_MODS = new Set(['shift', 'ctrl', 'alt', 'meta']);
+
 function isValidBinding(b: unknown): b is KeyboardBinding {
   if (!b || typeof b !== 'object') return false;
   const o = b as Record<string, unknown>;
-  return typeof o.key === 'string' && typeof o.chars === 'string';
+  if (typeof o.key !== 'string' || typeof o.chars !== 'string') return false;
+  if (o.mods !== undefined && !Array.isArray(o.mods)) return false;
+  return true;
+}
+
+function normalizeBinding(b: KeyboardBinding): KeyboardBinding {
+  return {
+    ...b,
+    key: b.key.toLowerCase(),
+    mods: (b.mods ?? []).map((m) => m.toLowerCase()).filter((m) => VALID_MODS.has(m)),
+  };
 }
 
 /**
@@ -184,10 +196,11 @@ export function mergeKeyboardBindings(
   defaults: KeyboardBinding[],
   user: KeyboardBinding[],
 ): KeyboardBinding[] {
-  const overrides = new Map(user.map((b) => [bindingKey(b), b]));
+  const deduped = [...new Map(user.map((b) => [bindingKey(b), b])).values()];
+  const overrides = new Map(deduped.map((b) => [bindingKey(b), b]));
   const merged = defaults.map((d) => overrides.get(bindingKey(d)) ?? d);
   const defaultKeys = new Set(defaults.map(bindingKey));
-  for (const b of user) {
+  for (const b of deduped) {
     if (!defaultKeys.has(bindingKey(b))) merged.push(b);
   }
   return merged;
@@ -261,7 +274,7 @@ export function loadConfig(): Config {
     ...(Array.isArray(p.keyboardBindings) && {
       keyboardBindings: mergeKeyboardBindings(
         DEFAULT_KEYBOARD_BINDINGS,
-        p.keyboardBindings.filter(isValidBinding),
+        p.keyboardBindings.filter(isValidBinding).map(normalizeBinding),
       ),
     }),
   };
