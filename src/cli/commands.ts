@@ -4,6 +4,11 @@ import path from 'node:path';
 import { configDir } from '../config';
 import { BASE_URL, isServerRunning, openBrowser, startServer, stopServer } from './http';
 
+/**
+ * Opens (or creates) session `id`, starts the server if needed, and opens the URL in the browser.
+ *
+ * @param id - The session ID to open (default: `'main'`).
+ */
 export async function cmdGo(id = 'main'): Promise<void> {
   if (!(await isServerRunning())) {
     await startServer();
@@ -33,6 +38,11 @@ export async function cmdGo(id = 'main'): Promise<void> {
   openBrowser(url);
 }
 
+/**
+ * Lists all active sessions, optionally filtered by a substring of the session ID.
+ *
+ * @param filter - Optional substring to filter session IDs.
+ */
 export async function cmdList(filter?: string): Promise<void> {
   let res: Response;
   try {
@@ -58,6 +68,11 @@ export async function cmdList(filter?: string): Promise<void> {
   }
 }
 
+/**
+ * Removes session `id` and stops the server if no sessions remain.
+ *
+ * @param id - The session ID to remove.
+ */
 export async function cmdRemove(id?: string): Promise<void> {
   if (!id) {
     console.error('webtty: rm requires a session id');
@@ -87,6 +102,12 @@ export async function cmdRemove(id?: string): Promise<void> {
   }
 }
 
+/**
+ * Renames session `id` to `newId`.
+ *
+ * @param id - The current session ID.
+ * @param newId - The new session ID.
+ */
 export async function cmdRename(id?: string, newId?: string): Promise<void> {
   if (!id || !newId) {
     console.error('webtty: rename requires two arguments: [id] [new-id]');
@@ -115,6 +136,7 @@ export async function cmdRename(id?: string, newId?: string): Promise<void> {
   }
 }
 
+/** Stops the server if it is running. */
 export async function cmdStop(): Promise<void> {
   if (!(await isServerRunning())) {
     console.log('webtty is not running');
@@ -129,6 +151,7 @@ export async function cmdStop(): Promise<void> {
   }
 }
 
+/** Starts the server if it is not already running. */
 export async function cmdStart(): Promise<void> {
   if (await isServerRunning()) {
     console.log('webtty is already running');
@@ -138,6 +161,7 @@ export async function cmdStart(): Promise<void> {
   console.log('webtty started');
 }
 
+/** Opens `~/.config/webtty/config.json` in `$VISUAL` / `$EDITOR`, creating it if absent. */
 export function cmdConfig(): void {
   const dir = configDir();
   const configPath = path.join(dir, 'config.json');

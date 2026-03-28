@@ -2,7 +2,14 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DEFAULT_CONFIG, DEFAULT_THEME, initConfig, loadConfig } from './config';
+import {
+  DEFAULT_CONFIG,
+  DEFAULT_KEYBOARD_BINDINGS,
+  DEFAULT_THEME,
+  initConfig,
+  loadConfig,
+  mergeKeyboardBindings,
+} from './config';
 
 let tmpDir: string;
 let configPath: string;
@@ -198,5 +205,107 @@ describe('loadConfig — reads and merges', () => {
   test('throws with webtty: prefix in message on read error', () => {
     fs.mkdirSync(configPath, { recursive: true });
     expect(() => loadConfig()).toThrow(/webtty:/);
+  });
+});
+
+describe('loadConfig — keyboardBindings', () => {
+  function writeConfig(content: string) {
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    fs.writeFileSync(configPath, content, 'utf8');
+  }
+
+  test('returns empty keyboardBindings when not set in file', () => {
+    writeConfig('{}');
+    expect(loadConfig().keyboardBindings).toEqual([]);
+  });
+
+  test('user binding is used as-is when no defaults exist', () => {
+    writeConfig(
+      JSON.stringify({ keyboardBindings: [{ key: 'enter', mods: ['shift'], chars: 'custom' }] }),
+    );
+    const bindings = loadConfig().keyboardBindings;
+    expect(bindings).toHaveLength(1);
+    expect(bindings[0].chars).toBe('custom');
+  });
+
+  test('multiple user bindings are all preserved', () => {
+    writeConfig(
+      JSON.stringify({
+        keyboardBindings: [
+          { key: 'enter', mods: ['ctrl'], chars: '\u001b[13;5u' },
+          { key: 'tab', mods: ['shift'], chars: '\u001b[9;2u' },
+        ],
+      }),
+    );
+    const bindings = loadConfig().keyboardBindings;
+    expect(bindings).toHaveLength(2);
+    expect(bindings.some((b) => b.key === 'enter' && b.mods?.includes('ctrl'))).toBe(true);
+    expect(bindings.some((b) => b.key === 'tab' && b.mods?.includes('shift'))).toBe(true);
+  });
+
+  test('mods order does not affect identity — ["ctrl","shift"] matches ["shift","ctrl"]', () => {
+    writeConfig(
+      JSON.stringify({
+        keyboardBindings: [
+          { key: 'enter', mods: ['ctrl', 'shift'], chars: 'first' },
+          { key: 'enter', mods: ['shift', 'ctrl'], chars: 'last-wins' },
+        ],
+      }),
+    );
+    const bindings = loadConfig().keyboardBindings;
+    expect(bindings).toHaveLength(1);
+    expect(bindings[0].chars).toBe('last-wins');
+  });
+
+  test('entries missing key or chars are silently ignored', () => {
+    writeConfig(JSON.stringify({ keyboardBindings: [{ mods: ['shift'] }, { key: 'enter' }] }));
+    expect(loadConfig().keyboardBindings).toEqual(DEFAULT_KEYBOARD_BINDINGS);
+  });
+
+  test('non-array keyboardBindings is ignored, defaults preserved', () => {
+    writeConfig(JSON.stringify({ keyboardBindings: 'invalid' }));
+    expect(loadConfig().keyboardBindings).toEqual(DEFAULT_KEYBOARD_BINDINGS);
+  });
+
+  test('binding with non-array mods is rejected', () => {
+    writeConfig(JSON.stringify({ keyboardBindings: [{ key: 'enter', chars: 'x', mods: {} }] }));
+    expect(loadConfig().keyboardBindings).toEqual([]);
+  });
+
+  test('unknown mods are filtered out at load time', () => {
+    writeConfig(
+      JSON.stringify({
+        keyboardBindings: [{ key: 'enter', mods: ['shift', 'super', 'unknown'], chars: 'x' }],
+      }),
+    );
+    const bindings = loadConfig().keyboardBindings;
+    expect(bindings[0].mods).toEqual(['shift']);
+  });
+});
+
+describe('mergeKeyboardBindings', () => {
+  const base = { key: 'enter', mods: ['shift'], chars: '\u001b[13;2u' };
+
+  test('user entry replaces matching default by key+mods identity', () => {
+    const result = mergeKeyboardBindings([base], [{ ...base, chars: 'custom' }]);
+    expect(result).toHaveLength(1);
+    expect(result[0].chars).toBe('custom');
+  });
+
+  test('user entry for different mods is added alongside default', () => {
+    const user = { key: 'enter', mods: ['ctrl'], chars: '\u001b[13;5u' };
+    const result = mergeKeyboardBindings([base], [user]);
+    expect(result).toHaveLength(2);
+  });
+
+  test('default is preserved when user has no matching entry', () => {
+    const result = mergeKeyboardBindings([base], []);
+    expect(result).toEqual([base]);
+  });
+
+  test('mods order is irrelevant for identity', () => {
+    const user = { key: 'enter', mods: ['shift'], chars: 'replaced' };
+    const result = mergeKeyboardBindings([{ ...base, mods: ['shift'] }], [user]);
+    expect(result[0].chars).toBe('replaced');
   });
 });

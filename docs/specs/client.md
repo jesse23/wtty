@@ -56,7 +56,8 @@ src/client/
 {
   cols, rows, fontSize, fontFamily, cursorStyle, cursorStyleBlink, scrollback,
   theme, copyOnSelect, rightClickBehavior,
-  mouseScrollSpeed  // used by the custom wheel handler, not passed to Terminal constructor
+  mouseScrollSpeed,       // used by the custom wheel handler, not passed to Terminal constructor
+  keyboardBindings        // used by the keydown capture handler, not passed to Terminal constructor
 }
 ```
 
@@ -96,6 +97,21 @@ All status messages written to the terminal share a consistent style:
 | WS close (unexpected) | `Connection lost. Reconnecting in 2s...` | Reconnect after 2s |
 | WS error | `WebSocket error.` | — |
 
+## Keyboard Bindings
+
+Browser `KeyboardEvent` objects do not carry terminal escape sequences — the browser has no knowledge of the Alacritty/Ghostty custom-binding convention that maps modifier+key combos to specific byte sequences. As a result, keys like Shift+Enter arrive at ghostty-web as a plain `keydown` with `shiftKey=true`, and ghostty-web sends the same `\r` it would for unmodified Enter — not the `\x1b\r` (ESC CR) that TUI apps such as opencode expect.
+
+A capture-phase `keydown` listener on the terminal container fires before ghostty-web's canvas handlers and intercepts matching bindings:
+
+1. Walk `config.keyboardBindings` (user-configured entries).
+2. Normalize `event.key` to lowercase and compare against each binding's `key`+`mods`.
+3. On match: call `e.preventDefault()` + `e.stopPropagation()` to suppress ghostty-web's default handling, then send `binding.chars` verbatim over WebSocket to the PTY.
+4. No match: return immediately — ghostty-web handles as normal.
+
+**`chars` encoding:** The client sends `binding.chars` verbatim. Standard JSON escapes (`\uXXXX`, `\r`, `\n`, `\t`) are resolved by `JSON.parse` at config load — no further processing occurs.
+
+See [config SPEC](config.md#keyboard-binding-objects) for the binding object schema and built-in defaults.
+
 ## Copy Behavior
 
 Controlled by two config keys from `GET /api/config`:
@@ -132,3 +148,4 @@ When a session ends (shell exits → WS close code `4001`) or the server stops (
 | Cursor style | `cursorStyle` / `cursorStyleBlink` defaults; DECSCUSR from PTY overrides at runtime via client-side intercept | [ADR 013](../adrs/013.client.cursor-style.md) | ✅ |
 | Non-text paste | Ctrl+V with no `text/plain` in clipboard forwards `\x16` to PTY; TUI apps read non-text content via their native OS clipboard API | [ADR 014](../adrs/014.client.image-paste.md) | ✅ |
 | Mouse scroll | When the PTY app enables mouse tracking (e.g. vim `set mouse=a`), wheel events are forwarded as SGR mouse sequences (`\x1b[<64/65;col;rowM`) instead of arrow keys, so apps scroll their buffer rather than move the cursor | [ADR 017](../adrs/017.client.mouse-scroll.md) | ✅ |
+| Keyboard bindings | Capture-phase `keydown` handler intercepts configured `key`+`mods` combos and sends `chars` to PTY; defaults to `[]` (no built-in bindings) | [ADR 018](../adrs/018.client.keyboard-bindings.md) | ✅ |

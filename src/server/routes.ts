@@ -23,6 +23,14 @@ function decodeId(raw: string): string | null {
   }
 }
 
+/**
+ * Reads and JSON-parses the request body (max 64 KB).
+ *
+ * @param req - The incoming HTTP request.
+ * @returns A promise resolving to the parsed JSON object, or an empty object if body is empty.
+ * @throws {Error} with `status: 413` if body exceeds 64 KB.
+ * @throws {Error} if the body contains invalid JSON.
+ */
 export function readJson(req: http.IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -44,6 +52,17 @@ export function readJson(req: http.IncomingMessage): Promise<unknown> {
   });
 }
 
+/**
+ * Main HTTP request handler for the webtty server.
+ * Dispatches all REST API routes and serves static client assets.
+ *
+ * @param req - The incoming HTTP request.
+ * @param res - The HTTP response object.
+ * @param distPath - Path to the server-side dist directory.
+ * @param wasmPath - Path to the ghostty-vt.wasm file.
+ * @param clientDistPath - Path to the client dist directory.
+ * @param onStop - Callback invoked when `POST /api/server/stop` is received.
+ */
 export async function handleRequest(
   req: http.IncomingMessage,
   res: http.ServerResponse,
@@ -77,6 +96,7 @@ export async function handleRequest(
       copyOnSelect: config.copyOnSelect,
       rightClickBehavior: config.rightClickBehavior,
       mouseScrollSpeed: config.mouseScrollSpeed,
+      keyboardBindings: config.keyboardBindings,
     };
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(clientConfig));

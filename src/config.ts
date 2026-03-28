@@ -2,6 +2,17 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+/** A single keyboard binding: intercepts `key`+`mods` and sends `chars` to the PTY. */
+export interface KeyboardBinding {
+  /** Key name matched case-insensitively against `KeyboardEvent.key` (e.g. `"enter"`, `"arrowup"`, `"a"`). */
+  key: string;
+  /** Modifier keys that must be active — and no others — for this binding to match. Accepted values: `"shift"`, `"ctrl"`, `"alt"`, `"meta"`. Order irrelevant. Unknown values are filtered out at config load time. */
+  mods?: string[];
+  /** Byte sequence sent verbatim to the PTY. Standard JSON escapes apply (`\r`, `\uXXXX`, etc.). */
+  chars: string;
+}
+
+/** Terminal color palette. All keys are optional; omitted keys fall back to the Campbell defaults. */
 export interface Theme {
   /** Terminal background. */
   background?: string;
@@ -48,6 +59,7 @@ export interface Theme {
 /** Right-click behavior: `"copyPaste"` copies selection + clears it if selection exists, otherwise native menu; `"default"` always shows native context menu. */
 export type RightClickBehavior = 'default' | 'copyPaste';
 
+/** Full webtty configuration. All keys are optional in the config file; missing keys fall back to {@link DEFAULT_CONFIG}. */
 export interface Config {
   /** HTTP listen port; env `PORT` takes precedence. */
   port: number;
@@ -83,8 +95,11 @@ export interface Config {
   logs: boolean;
   /** Terminal color palette. */
   theme: Theme;
+  /** Custom key-to-sequence bindings. Merged with built-in defaults by `(key, mods)` identity. */
+  keyboardBindings: KeyboardBinding[];
 }
 
+/** Returns the webtty config directory: `~/.config/webtty`. */
 export function configDir(): string {
   return path.join(process.env.HOME ?? os.homedir(), '.config', 'webtty');
 }
@@ -118,6 +133,9 @@ export const DEFAULT_THEME: Theme = {
 };
 
 // NOTE: export for testing only; users should use loadConfig() and initConfig() instead
+export const DEFAULT_KEYBOARD_BINDINGS: KeyboardBinding[] = [];
+
+// NOTE: export for testing only; users should use loadConfig() and initConfig() instead
 export const DEFAULT_CONFIG: Config = {
   port: 2346,
   host: '127.0.0.1',
@@ -139,7 +157,54 @@ export const DEFAULT_CONFIG: Config = {
   mouseScrollSpeed: 1,
   logs: false,
   theme: DEFAULT_THEME,
+  keyboardBindings: DEFAULT_KEYBOARD_BINDINGS,
 };
+
+function bindingKey(b: KeyboardBinding): string {
+  const mods = [...(b.mods ?? [])].sort().join('+');
+  return `${b.key.toLowerCase()}|${mods}`;
+}
+
+const VALID_MODS = new Set(['shift', 'ctrl', 'alt', 'meta']);
+
+function isValidBinding(b: unknown): b is KeyboardBinding {
+  if (!b || typeof b !== 'object') return false;
+  const o = b as Record<string, unknown>;
+  if (typeof o.key !== 'string' || typeof o.chars !== 'string') return false;
+  if (o.mods !== undefined && !Array.isArray(o.mods)) return false;
+  return true;
+}
+
+function normalizeBinding(b: KeyboardBinding): KeyboardBinding {
+  return {
+    ...b,
+    key: b.key.toLowerCase(),
+    mods: (b.mods ?? []).map((m) => m.toLowerCase()).filter((m) => VALID_MODS.has(m)),
+  };
+}
+
+/**
+ * Merges user-supplied bindings over a set of defaults by `(key, mods)` identity.
+ * User entries replace matching defaults; unmatched user entries are appended.
+ *
+ * @param defaults - Default bindings to merge over.
+ * @param user - User-supplied bindings that override defaults.
+ * @returns Merged bindings with user entries replacing matching defaults and new user entries appended.
+ */
+// NOTE: export for testing only
+export function mergeKeyboardBindings(
+  defaults: KeyboardBinding[],
+  user: KeyboardBinding[],
+): KeyboardBinding[] {
+  const deduped = [...new Map(user.map((b) => [bindingKey(b), b])).values()];
+  const overrides = new Map(deduped.map((b) => [bindingKey(b), b]));
+  const merged = defaults.map((d) => overrides.get(bindingKey(d)) ?? d);
+  const defaultKeys = new Set(defaults.map(bindingKey));
+  for (const b of deduped) {
+    if (!defaultKeys.has(bindingKey(b))) merged.push(b);
+  }
+  return merged;
+}
 
 /**
  * Load config from `~/.config/webtty/config.json`, merged over `DEFAULT_CONFIG`.
@@ -206,6 +271,12 @@ export function loadConfig(): Config {
       p.mouseScrollSpeed > 0 && { mouseScrollSpeed: p.mouseScrollSpeed }),
     ...(typeof p.logs === 'boolean' && { logs: p.logs }),
     ...(p.theme && typeof p.theme === 'object' && { theme: { ...DEFAULT_THEME, ...p.theme } }),
+    ...(Array.isArray(p.keyboardBindings) && {
+      keyboardBindings: mergeKeyboardBindings(
+        DEFAULT_KEYBOARD_BINDINGS,
+        p.keyboardBindings.filter(isValidBinding).map(normalizeBinding),
+      ),
+    }),
   };
 }
 
