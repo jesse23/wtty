@@ -3,28 +3,49 @@ import os from 'node:os';
 import path from 'node:path';
 
 export interface Theme {
+  /** Terminal background. */
   background?: string;
+  /** Default text color. */
   foreground?: string;
+  /** Cursor color. */
   cursor?: string;
+  /** Selection highlight. */
   selection?: string;
+  /** ANSI 0. */
   black?: string;
+  /** ANSI 1. */
   red?: string;
+  /** ANSI 2. */
   green?: string;
+  /** ANSI 3. */
   yellow?: string;
+  /** ANSI 4. */
   blue?: string;
+  /** ANSI 5. */
   purple?: string;
+  /** ANSI 6. */
   cyan?: string;
+  /** ANSI 7. */
   white?: string;
+  /** ANSI 8. */
   brightBlack?: string;
+  /** ANSI 9. */
   brightRed?: string;
+  /** ANSI 10. */
   brightGreen?: string;
+  /** ANSI 11. */
   brightYellow?: string;
+  /** ANSI 12. */
   brightBlue?: string;
+  /** ANSI 13. */
   brightPurple?: string;
+  /** ANSI 14. */
   brightCyan?: string;
+  /** ANSI 15. */
   brightWhite?: string;
 }
 
+/** Right-click behavior: `"copyPaste"` copies selection + clears it if selection exists, otherwise native menu; `"default"` always shows native context menu. */
 export type RightClickBehavior = 'default' | 'copyPaste';
 
 export interface Config {
@@ -72,6 +93,7 @@ function getConfigPath(): string {
   return path.join(configDir(), 'config.json');
 }
 
+// NOTE: export for testing only; users should use loadConfig() and saveConfig() instead
 export const DEFAULT_THEME: Theme = {
   background: '#000000',
   foreground: '#CCCCCC',
@@ -95,6 +117,7 @@ export const DEFAULT_THEME: Theme = {
   brightWhite: '#F2F2F2',
 };
 
+// NOTE: export for testing only; users should use loadConfig() and saveConfig() instead
 export const DEFAULT_CONFIG: Config = {
   port: 2346,
   host: '127.0.0.1',
@@ -118,6 +141,14 @@ export const DEFAULT_CONFIG: Config = {
   theme: DEFAULT_THEME,
 };
 
+/**
+ * Load config from `~/.config/webtty/config.json`, merged over `DEFAULT_CONFIG`.
+ *
+ * On first run (file absent), writes the default port/host stub and returns defaults.
+ * Unknown keys and keys with wrong types are silently ignored.
+ *
+ * @throws if the file exists but cannot be read or contains invalid JSON.
+ */
 export function loadConfig(): Config {
   if (!fs.existsSync(getConfigPath())) {
     try {
@@ -177,6 +208,15 @@ export function loadConfig(): Config {
   };
 }
 
+/**
+ * Write the initial config stub (`port` + `host` only) to `~/.config/webtty/config.json`.
+ *
+ * Only writes the two keys that are safe to persist as defaults; all other
+ * keys are intentionally omitted so future webtty versions can add new fields
+ * without the stub going stale.
+ *
+ * @throws on filesystem errors (directory creation failure, write permission denied, etc.).
+ */
 export function saveConfig(_config: Config): void {
   fs.mkdirSync(path.dirname(getConfigPath()), { recursive: true });
   const content = JSON.stringify(
