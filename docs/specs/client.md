@@ -42,7 +42,7 @@ src/client/
 1. Reads `sessionId` from `window.location.pathname` (`/s/main` → `main`)
 2. Fetches `GET /api/config` to get terminal config
 3. Sets `document.title = sessionId + ' | webtty'`
-4. Initialises a `ghostty-web` `Terminal` with config values (cols, rows, fontSize, fontFamily, cursorStyle, cursorStyleBlink, scrollback, theme, copyOnSelect, rightClickBehavior, mouseScrollSpeed)
+4. Initialises a `ghostty-web` `Terminal` with config values (cols, rows, fontSize, fontFamily, cursorStyle, cursorStyleBlink, scrollback, theme, copyOnSelect, rightClickBehavior)
 5. Connects to `ws://<host>/ws/:id?cols=<cols>&rows=<rows>` over WebSocket
 6. Fits the terminal to the viewport and observes resize events via `FitAddon`
 7. Sends a `{ type: 'resize', cols, rows }` JSON message on open and on every terminal resize
@@ -55,7 +55,8 @@ src/client/
 ```ts
 {
   cols, rows, fontSize, fontFamily, cursorStyle, cursorStyleBlink, scrollback,
-  theme, copyOnSelect, rightClickBehavior, mouseScrollSpeed
+  theme, copyOnSelect, rightClickBehavior,
+  mouseScrollSpeed  // used by the custom wheel handler, not passed to Terminal constructor
 }
 ```
 

@@ -24,7 +24,7 @@ afterEach(() => {
   }
 });
 
-describe('saveConfig', () => {
+describe('initConfig', () => {
   test('creates the config directory if it does not exist', () => {
     initConfig();
     expect(fs.existsSync(path.dirname(configPath))).toBe(true);
@@ -51,12 +51,8 @@ describe('loadConfig — first run', () => {
     expect(fs.existsSync(configPath)).toBe(true);
   });
 
-  test('DEFAULT_CONFIG.term is xterm-256color regardless of $TERM env', () => {
-    const saved = process.env.TERM;
-    process.env.TERM = 'alacritty';
+  test('DEFAULT_CONFIG.term is xterm-256color', () => {
     expect(DEFAULT_CONFIG.term).toBe('xterm-256color');
-    if (saved === undefined) delete process.env.TERM;
-    else process.env.TERM = saved;
   });
 
   test('returns config that equals DEFAULT_CONFIG after first run', () => {
