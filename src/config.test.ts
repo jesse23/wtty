@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DEFAULT_CONFIG, DEFAULT_THEME, loadConfig, saveConfig } from './config';
+import { DEFAULT_CONFIG, DEFAULT_THEME, loadConfig, initConfig } from './config';
 
 let tmpDir: string;
 let configPath: string;
@@ -26,18 +26,18 @@ afterEach(() => {
 
 describe('saveConfig', () => {
   test('creates the config directory if it does not exist', () => {
-    saveConfig(DEFAULT_CONFIG);
+    initConfig();
     expect(fs.existsSync(path.dirname(configPath))).toBe(true);
   });
 
   test('writes valid JSON', () => {
-    saveConfig(DEFAULT_CONFIG);
+    initConfig();
     const raw = fs.readFileSync(configPath, 'utf8');
     expect(() => JSON.parse(raw)).not.toThrow();
   });
 
   test('written file contains port and host', () => {
-    saveConfig(DEFAULT_CONFIG);
+    initConfig();
     const raw = fs.readFileSync(configPath, 'utf8');
     expect(raw).toContain('"port"');
     expect(raw).toContain('"host"');
