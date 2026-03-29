@@ -202,9 +202,9 @@ export function bytesToDisplay(buf: Buffer): string {
     .join(' ');
 }
 
-export function cmdChars(): void {
+export function cmdKey(): void {
   if (!process.stdin.isTTY) {
-    console.error('webtty chars: requires an interactive terminal');
+    console.error('webtty key: requires an interactive terminal');
     process.exit(1);
   }
 

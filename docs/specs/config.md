@@ -120,7 +120,7 @@ All keys are optional — omit any key to use the default value.
 | `fontSize` | number | `13` | Font size in px |
 | `fontFamily` | string | `"Menlo, Consolas, 'DejaVu Sans Mono', monospace"` | CSS font-family stack |
 | `theme` | object | Campbell | Terminal color palette — see theme keys below |
-| `keyboardBindings` | array | `[]` | Custom key-to-sequence bindings sent to the PTY. See [keyboard spec](keyboard.md) for schema and examples. |
+| `keyboardBindings` | array | `[]` | Custom key-to-sequence bindings sent to the PTY. See [key-bindings spec](key-bindings.md) for schema and examples. |
 
 ### Theme keys
 
@@ -210,4 +210,4 @@ All theme keys are optional; omitted keys fall back to the Campbell (Windows Ter
 | Server logs | `logs: true` appends server stdout/stderr to `~/.config/webtty/server.log` | [ADR 011](../adrs/011.cli.config-and-help.md) | ✅ |
 | Cursor style | `cursorStyle` sets the default cursor shape; DECSCUSR sequences from apps override at runtime | [ADR 013](../adrs/013.client.cursor-style.md) | ✅ |
 | Mouse scroll speed | `mouseScrollSpeed` scales SGR events per wheel tick for apps with mouse tracking; default `1` | [ADR 017](../adrs/017.client.mouse-scroll.md) | ✅ |
-| Keyboard bindings | `keyboardBindings` — configurable key-to-sequence mappings sent to PTY; defaults to `[]` | [ADR 018](../adrs/018.keyboard.key-bindings.md), [keyboard spec](keyboard.md) | ✅ |
+| Keyboard bindings | `keyboardBindings` — configurable key-to-sequence mappings sent to PTY; defaults to `[]` | [ADR 018](../adrs/018.key-bindings.config-support.md), [key-bindings spec](key-bindings.md) | ✅ |

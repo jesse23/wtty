@@ -1,5 +1,5 @@
 import {
-  cmdChars,
+  cmdKey,
   cmdConfig,
   cmdGo,
   cmdList,
@@ -32,7 +32,7 @@ function printHelp(): void {
       row('stop', 'Stop the webtty server'),
       row('start', 'Start the webtty server'),
       row('config', 'Open the config file in $VISUAL, $EDITOR, or a default editor'),
-      row('chars', 'Capture a key combo and print its chars value for keyboardBindings'),
+      row('key', 'Capture a key combo and print its chars value for keyboardBindings'),
       row('help', 'Show this help message'),
     ].join('\n'),
   );
@@ -68,8 +68,8 @@ if (!cmd) {
     case 'config':
       cmdConfig();
       break;
-    case 'chars':
-      cmdChars();
+    case 'key':
+      cmdKey();
       break;
     case 'help':
     case '--help':

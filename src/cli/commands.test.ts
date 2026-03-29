@@ -263,8 +263,8 @@ describe('cli — no-arg, help, config', () => {
     expect(stdout).toContain('/s/main');
   });
 
-  test('chars exits with error when not a TTY', async () => {
-    const { stderr, exitCode } = await runCli(port, 'chars');
+  test('key exits with error when not a TTY', async () => {
+    const { stderr, exitCode } = await runCli(port, 'key');
     expect(exitCode).toBe(1);
     expect(stderr).toContain('requires an interactive terminal');
   });
