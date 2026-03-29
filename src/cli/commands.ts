@@ -173,3 +173,46 @@ export function cmdConfig(): void {
     process.env.VISUAL ?? process.env.EDITOR ?? (process.platform === 'win32' ? 'notepad' : 'vi');
   childProcess.spawnSync(editor, [configPath], { stdio: 'inherit' });
 }
+
+export function bytesToChars(buf: Buffer): string {
+  let out = '';
+  for (const b of buf) {
+    if (b === 0x1b) out += '\\u001b';
+    else if (b === 0x0d) out += '\\r';
+    else if (b === 0x09) out += '\\t';
+    else if (b === 0x0a) out += '\\n';
+    else if (b >= 0x20 && b < 0x7f) out += String.fromCharCode(b);
+    else out += `\\u${b.toString(16).padStart(4, '0')}`;
+  }
+  return `"${out}"`;
+}
+
+export function cmdChars(): void {
+  if (!process.stdin.isTTY) {
+    console.error('webtty chars: requires an interactive terminal');
+    process.exit(1);
+  }
+
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+  console.log('Press any key combo to see its chars value. q to quit.\n');
+
+  let buf = Buffer.alloc(0);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  const flush = () => {
+    if (buf.length === 0) return;
+    console.log(`  ${bytesToChars(buf)}\n`);
+    buf = Buffer.alloc(0);
+  };
+
+  process.stdin.on('data', (chunk: Buffer) => {
+    if (chunk.length === 1 && chunk[0] === 0x71) {
+      process.stdin.setRawMode(false);
+      process.exit(0);
+    }
+    buf = Buffer.concat([buf, chunk]);
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(flush, 50);
+  });
+}

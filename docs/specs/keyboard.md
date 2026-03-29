@@ -82,40 +82,30 @@ Common examples:
 
 #### Discovering sequences from scratch
 
-When you have no existing config to copy from, two approaches work:
+Run `webtty chars` — it puts the terminal in raw mode and prints the `chars`
+value ready to copy-paste for each key combo you press:
 
-**Capture from your native terminal**
+```sh
+webtty chars
+# Press any key combo to see its chars value. q to quit.
 
-`cat` shows ESC as `^[` but CR is invisible — it just moves the cursor. Use
-`od -c` instead, which prints named escape characters:
+  "\u001b\r"      ← pressed Shift+Enter
+  "\u001b[13;5u"  ← pressed Ctrl+Enter
+```
+
+If you do not have webtty installed, `od -c` is the fallback — it shows named
+escape characters so CR is visible as `\r` rather than an invisible cursor
+movement:
 
 ```sh
 cat | od -c
 # press the key combo, then Ctrl+D
+# 0000000  033   \r        (033 = octal ESC → \u001b)
 ```
-
-Output for Shift+Enter (`\u001b\r`):
-
-```
-0000000  033   \r
-```
-
-`033` is octal for ESC → `\u001b`. `\r` is CR → `\r`. For hex, `xxd` works
-the same way: `1b 0d` → `\u001b\r`.
-
-**Look it up in a reference**
-
-There is no interactive lookup tool for legacy sequences — they are not
-standardized. The closest reference is the xterm modified keys table at
-[invisible-island.net/xterm/modified-keys.html](https://invisible-island.net/xterm/modified-keys.html),
-which documents the CSI sequences xterm sends for modifier+key combinations.
-For the ESC-prefix pattern specifically (`\u001b` + unmodified key), the rule
-is simple enough to derive directly: ESC followed by whatever the unmodified
-key sends (`\r` for Enter, `\t` for Tab, and so on).
 
 If the captured sequence still does nothing, the app may expect a different
-convention. Check the app's documentation or source for what it registers as
-its key handler.
+convention. Check the app's documentation or source for what sequence it
+registers as its key handler.
 
 ### Kitty Keyboard Protocol
 
@@ -185,3 +175,4 @@ send time.
 |---------|-------------|-----|-------|
 | Configurable bindings | `keyboardBindings` array in `~/.config/webtty/config.json`; capture-phase `keydown` handler sends `chars` to PTY; defaults to `[]` | [ADR 018](../adrs/018.keyboard.md) | ✅ |
 | Legacy encoding recommendation | `"\u001b\r"` recommended over KKP sequences for Shift+Enter and similar combos; works across nested terminal chains | [ADR 019](../adrs/019.keyboard.md) | ✅ |
+| `webtty chars` | CLI command: puts terminal in raw mode, prints the `chars` value for each key combo pressed; Ctrl+C to exit | [ADR 018](../adrs/018.keyboard.md) | ✅ |

@@ -9,6 +9,7 @@ import {
   waitForServerDown,
   waitForServerReady,
 } from '../utils.test';
+import { bytesToChars } from './commands';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_ENTRY = path.resolve(__dirname, 'index.ts');
@@ -179,6 +180,30 @@ describe('cli — session management', () => {
   });
 });
 
+describe('bytesToChars', () => {
+  test('ESC CR → legacy shift+enter encoding', () => {
+    expect(bytesToChars(Buffer.from([0x1b, 0x0d]))).toBe('"\\u001b\\r"');
+  });
+
+  test('ESC [ 1 3 ; 2 u → KKP shift+enter', () => {
+    expect(bytesToChars(Buffer.from([0x1b, 0x5b, 0x31, 0x33, 0x3b, 0x32, 0x75]))).toBe(
+      '"\\u001b[13;2u"',
+    );
+  });
+
+  test('printable ASCII passes through', () => {
+    expect(bytesToChars(Buffer.from('hello'))).toBe('"hello"');
+  });
+
+  test('tab → \\t', () => {
+    expect(bytesToChars(Buffer.from([0x09]))).toBe('"\\t"');
+  });
+
+  test('non-ASCII control byte → \\uXXXX', () => {
+    expect(bytesToChars(Buffer.from([0x00]))).toBe('"\\u0000"');
+  });
+});
+
 describe('cli — no-arg, help, config', () => {
   let port: number;
   let baseUrl: string;
@@ -208,6 +233,12 @@ describe('cli — no-arg, help, config', () => {
     const { stdout, exitCode } = await runCli(port);
     expect(exitCode).toBe(0);
     expect(stdout).toContain('/s/main');
+  });
+
+  test('chars exits with error when not a TTY', async () => {
+    const { stderr, exitCode } = await runCli(port, 'chars');
+    expect(exitCode).toBe(1);
+    expect(stderr).toContain('requires an interactive terminal');
   });
 
   test('help prints usage', async () => {
