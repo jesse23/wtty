@@ -181,6 +181,8 @@ export function bytesToChars(buf: Buffer): string {
     else if (b === 0x0d) out += '\\r';
     else if (b === 0x09) out += '\\t';
     else if (b === 0x0a) out += '\\n';
+    else if (b === 0x22) out += '\\"';
+    else if (b === 0x5c) out += '\\\\';
     else if (b >= 0x20 && b < 0x7f) out += String.fromCharCode(b);
     else out += `\\u${b.toString(16).padStart(4, '0')}`;
   }
@@ -206,11 +208,21 @@ export function cmdKey(): void {
   if (!process.stdin.isTTY) {
     console.error('webtty key: requires an interactive terminal');
     process.exit(1);
+    return;
   }
 
   const dim = '\x1b[2m';
   const bold = '\x1b[1m';
   const reset = '\x1b[0m';
+
+  const restoreTerminal = () => {
+    try {
+      process.stdin.setRawMode(false);
+    } catch {}
+  };
+  process.once('exit', restoreTerminal);
+  process.once('SIGINT', restoreTerminal);
+  process.once('SIGTERM', restoreTerminal);
 
   process.stdin.setRawMode(true);
   process.stdin.resume();
@@ -231,6 +243,9 @@ export function cmdKey(): void {
   process.stdin.on('data', (chunk: Buffer) => {
     if (chunk.length === 1 && chunk[0] === 0x71) {
       process.stdin.setRawMode(false);
+      process.removeListener('exit', restoreTerminal);
+      process.removeListener('SIGINT', restoreTerminal);
+      process.removeListener('SIGTERM', restoreTerminal);
       console.log(`  ${'─'.repeat(17)}\n`);
       process.exit(0);
     }

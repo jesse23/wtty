@@ -233,6 +233,14 @@ describe('bytesToChars', () => {
   test('non-ASCII control byte → \\uXXXX', () => {
     expect(bytesToChars(Buffer.from([0x00]))).toBe('"\\u0000"');
   });
+
+  test('double quote → \\" (valid JSON escape)', () => {
+    expect(bytesToChars(Buffer.from([0x22]))).toBe('"\\""');
+  });
+
+  test('backslash → \\\\ (valid JSON escape)', () => {
+    expect(bytesToChars(Buffer.from([0x5c]))).toBe('"\\\\"');
+  });
 });
 
 describe('cli — no-arg, help, config', () => {
@@ -636,9 +644,21 @@ describe('cli — unit (mocked http)', () => {
     spawnSpy.mockRestore();
   });
 
-  test('cmdKey exits with error when not a TTY', async () => {
+  test('cmdKey exits with error when not a TTY', () => {
     Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
     const err = spyOn(console, 'error').mockImplementation(() => {});
+    const exit = spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('exit');
+    });
+    expect(() => cmds.cmdKey()).toThrow('exit');
+    expect(err).toHaveBeenCalledWith('webtty key: requires an interactive terminal');
+    Object.defineProperty(process.stdin, 'isTTY', { value: undefined, configurable: true });
+    err.mockRestore();
+    exit.mockRestore();
+  });
+
+  test('cmdKey TTY mode captures and formats key presses', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
     const exit = spyOn(process, 'exit').mockImplementation(() => undefined as never);
     (process.stdin as NodeJS.ReadStream & { setRawMode: unknown }).setRawMode = mock(
       () => process.stdin,
@@ -646,9 +666,18 @@ describe('cli — unit (mocked http)', () => {
     const resume = spyOn(process.stdin, 'resume').mockImplementation(() => process.stdin);
     const onSpy = spyOn(process.stdin, 'on').mockImplementation(() => process.stdin);
     const log = spyOn(console, 'log').mockImplementation(() => {});
+
+    let capturedExitHandler: (() => void) | undefined;
+    const onceSpy = spyOn(process, 'once').mockImplementation(
+      (event: string | symbol, handler: (...args: unknown[]) => void) => {
+        if (event === 'exit') capturedExitHandler = handler as () => void;
+        return process;
+      },
+    );
+
     cmds.cmdKey();
-    expect(err).toHaveBeenCalledWith('webtty key: requires an interactive terminal');
-    expect(exit).toHaveBeenCalledWith(1);
+
+    capturedExitHandler?.();
 
     const dataHandler = (
       onSpy as unknown as { mock: { calls: Array<[string, (c: Buffer) => void]> } }
@@ -660,10 +689,10 @@ describe('cli — unit (mocked http)', () => {
 
     (process.stdin as unknown as Record<string, unknown>).setRawMode = undefined;
     Object.defineProperty(process.stdin, 'isTTY', { value: undefined, configurable: true });
-    err.mockRestore();
     exit.mockRestore();
     resume.mockRestore();
     onSpy.mockRestore();
+    onceSpy.mockRestore();
     log.mockRestore();
   });
 });
