@@ -12,14 +12,7 @@ import {
   waitForServerReady,
 } from '../utils.test';
 import { bytesToChars, bytesToDisplay } from './commands';
-
-mock.module('./http', () => ({
-  BASE_URL: 'http://localhost:2346',
-  isServerRunning: mock(async () => false),
-  startServer: mock(async () => {}),
-  stopServer: mock(async () => true),
-  openBrowser: mock(() => {}),
-}));
+import * as httpModule from './http';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_ENTRY = path.resolve(__dirname, 'index.ts');
@@ -29,7 +22,6 @@ const tmpHome = makeTmpHome('cli-test');
 
 afterAll(() => {
   cleanupTmpHome(tmpHome);
-  mock.restore();
 });
 
 async function runCli(
@@ -312,58 +304,65 @@ describe('cli — no-arg, help, config', () => {
 });
 
 describe('cli — unit (mocked http)', () => {
-  let http: typeof import('./http');
   let cmds: typeof import('./commands');
 
   beforeAll(async () => {
-    http = await import('./http');
     cmds = await import('./commands');
   });
 
   test('cmdStop when running stops server', async () => {
-    (http.isServerRunning as ReturnType<typeof mock>).mockResolvedValueOnce(true);
-    (http.stopServer as ReturnType<typeof mock>).mockResolvedValueOnce(true);
+    const isRunning = spyOn(httpModule, 'isServerRunning').mockResolvedValueOnce(true);
+    const stop = spyOn(httpModule, 'stopServer').mockResolvedValueOnce(true);
     const log = spyOn(console, 'log').mockImplementation(() => {});
     await cmds.cmdStop();
     expect(log).toHaveBeenCalledWith('webtty stopped');
+    isRunning.mockRestore();
+    stop.mockRestore();
     log.mockRestore();
   });
 
   test('cmdStop when stop fails exits with error', async () => {
-    (http.isServerRunning as ReturnType<typeof mock>).mockResolvedValueOnce(true);
-    (http.stopServer as ReturnType<typeof mock>).mockResolvedValueOnce(false);
+    const isRunning = spyOn(httpModule, 'isServerRunning').mockResolvedValueOnce(true);
+    const stop = spyOn(httpModule, 'stopServer').mockResolvedValueOnce(false);
     const err = spyOn(console, 'error').mockImplementation(() => {});
     const exit = spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('exit');
     });
     await expect(cmds.cmdStop()).rejects.toThrow('exit');
     expect(err).toHaveBeenCalledWith('webtty stop failed');
+    isRunning.mockRestore();
+    stop.mockRestore();
     err.mockRestore();
     exit.mockRestore();
   });
 
   test('cmdStop when not running logs not running', async () => {
-    (http.isServerRunning as ReturnType<typeof mock>).mockResolvedValueOnce(false);
+    const isRunning = spyOn(httpModule, 'isServerRunning').mockResolvedValueOnce(false);
     const log = spyOn(console, 'log').mockImplementation(() => {});
     await cmds.cmdStop();
     expect(log).toHaveBeenCalledWith('webtty is not running');
+    isRunning.mockRestore();
     log.mockRestore();
   });
 
   test('cmdStart when not running starts server', async () => {
-    (http.isServerRunning as ReturnType<typeof mock>).mockResolvedValueOnce(false);
+    const isRunning = spyOn(httpModule, 'isServerRunning').mockResolvedValueOnce(false);
+    const start = spyOn(httpModule, 'startServer').mockResolvedValueOnce(undefined);
     const log = spyOn(console, 'log').mockImplementation(() => {});
     await cmds.cmdStart();
-    expect(http.startServer).toHaveBeenCalled();
+    expect(start).toHaveBeenCalled();
     expect(log).toHaveBeenCalledWith('webtty started');
+    isRunning.mockRestore();
+    start.mockRestore();
     log.mockRestore();
   });
 
   test('cmdStart when already running logs already running', async () => {
-    (http.isServerRunning as ReturnType<typeof mock>).mockResolvedValueOnce(true);
+    const isRunning = spyOn(httpModule, 'isServerRunning').mockResolvedValueOnce(true);
     const log = spyOn(console, 'log').mockImplementation(() => {});
     await cmds.cmdStart();
     expect(log).toHaveBeenCalledWith('webtty is already running');
+    isRunning.mockRestore();
     log.mockRestore();
   });
 
@@ -433,10 +432,11 @@ describe('cli — unit (mocked http)', () => {
           headers: { 'x-sessions-remaining': '0' },
         }),
     ) as unknown as typeof fetch;
-    (http.stopServer as ReturnType<typeof mock>).mockResolvedValueOnce(true);
+    const stop = spyOn(httpModule, 'stopServer').mockResolvedValueOnce(true);
     const log = spyOn(console, 'log').mockImplementation(() => {});
     await cmds.cmdRemove('last');
     expect(log).toHaveBeenCalledWith(expect.stringContaining('webtty stopped'));
+    stop.mockRestore();
     log.mockRestore();
   });
 
@@ -508,29 +508,33 @@ describe('cli — unit (mocked http)', () => {
   });
 
   test('cmdGo when server not running starts it', async () => {
-    (http.isServerRunning as ReturnType<typeof mock>).mockResolvedValueOnce(false);
+    const isRunning = spyOn(httpModule, 'isServerRunning').mockResolvedValueOnce(false);
+    const start = spyOn(httpModule, 'startServer').mockResolvedValueOnce(undefined);
     global.fetch = mock(async (url: string) => {
       if (url.includes('/api/sessions/main')) return new Response(null, { status: 404 });
       return new Response(JSON.stringify({ id: 'main' }), { status: 200 });
     }) as unknown as typeof fetch;
     const log = spyOn(console, 'log').mockImplementation(() => {});
     await cmds.cmdGo('main');
-    expect(http.startServer).toHaveBeenCalled();
+    expect(start).toHaveBeenCalled();
     expect(log).toHaveBeenCalledWith(expect.stringContaining('/s/main'));
+    isRunning.mockRestore();
+    start.mockRestore();
     log.mockRestore();
   });
 
   test('cmdGo when session exists opens it', async () => {
-    (http.isServerRunning as ReturnType<typeof mock>).mockResolvedValueOnce(true);
+    const isRunning = spyOn(httpModule, 'isServerRunning').mockResolvedValueOnce(true);
     global.fetch = mock(async () => new Response(null, { status: 200 })) as unknown as typeof fetch;
     const log = spyOn(console, 'log').mockImplementation(() => {});
     await cmds.cmdGo('main');
     expect(log).toHaveBeenCalledWith(expect.stringContaining('/s/main'));
+    isRunning.mockRestore();
     log.mockRestore();
   });
 
   test('cmdGo session creation failure exits with error', async () => {
-    (http.isServerRunning as ReturnType<typeof mock>).mockResolvedValueOnce(true);
+    const isRunning = spyOn(httpModule, 'isServerRunning').mockResolvedValueOnce(true);
     global.fetch = mock(async (url: string) => {
       if (url.includes('/api/sessions/fail')) return new Response(null, { status: 404 });
       return new Response(JSON.stringify({ error: 'bad' }), { status: 500 });
@@ -540,6 +544,7 @@ describe('cli — unit (mocked http)', () => {
       throw new Error('exit');
     });
     await expect(cmds.cmdGo('fail')).rejects.toThrow('exit');
+    isRunning.mockRestore();
     err.mockRestore();
     exit.mockRestore();
   });
