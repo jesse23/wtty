@@ -82,8 +82,8 @@ function fit(): void {
   fitAddon.fit();
   const canvas = container.querySelector('canvas') as HTMLElement | null;
   if (!canvas) return;
-  const hGap = container.clientWidth - canvas.offsetWidth;
-  const vGap = container.clientHeight - canvas.offsetHeight;
+  const hGap = Math.max(0, container.clientWidth - canvas.offsetWidth);
+  const vGap = Math.max(0, container.clientHeight - canvas.offsetHeight);
   container.style.paddingLeft = `${Math.floor(hGap / 2)}px`;
   container.style.paddingRight = `${Math.ceil(hGap / 2)}px`;
   container.style.paddingTop = `${Math.floor(vGap / 2)}px`;
@@ -91,7 +91,7 @@ function fit(): void {
 }
 
 fit();
-new ResizeObserver(() => fit()).observe(container);
+new ResizeObserver(() => fit()).observe(container, { box: 'border-box' });
 
 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 let ws: WebSocket;
