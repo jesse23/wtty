@@ -203,6 +203,25 @@ container.addEventListener(
   { capture: true },
 );
 
+// Intercept Ctrl/Cmd +/- to resize the font without Shift, matching VS Code.
+// Uses window so it fires regardless of focus, and preventDefault stops the
+// browser's own page-zoom from triggering at the same time.
+let currentFontSize = config.fontSize;
+window.addEventListener(
+  'keydown',
+  (e: KeyboardEvent) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    if (e.key !== '=' && e.key !== '-' && e.key !== '0') return;
+    e.preventDefault();
+    if (e.key === '=') currentFontSize = Math.min(32, currentFontSize + 1);
+    else if (e.key === '-') currentFontSize = Math.max(6, currentFontSize - 1);
+    else currentFontSize = config.fontSize;
+    term.options.fontSize = currentFontSize;
+    fit();
+  },
+  { capture: true },
+);
+
 // Forward terminal keystrokes and input to the PTY over WebSocket.
 term.onData((data: string) => {
   if (ws && ws.readyState === WebSocket.OPEN) {
