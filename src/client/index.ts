@@ -213,6 +213,7 @@ window.addEventListener(
     if (!e.ctrlKey && !e.metaKey) return;
     if (e.key !== '=' && e.key !== '-' && e.key !== '0') return;
     e.preventDefault();
+    e.stopPropagation();
     if (e.key === '=') currentFontSize = Math.min(32, currentFontSize + 1);
     else if (e.key === '-') currentFontSize = Math.max(6, currentFontSize - 1);
     else currentFontSize = config.fontSize;
