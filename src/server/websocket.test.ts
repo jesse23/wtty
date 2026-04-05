@@ -204,6 +204,30 @@ describe('websocket', () => {
     expect(messages.join('')).toContain('resize-ok');
   });
 
+  test('GET /p/:pid redirects to session URL after PTY spawns', async () => {
+    await fetch(`${baseUrl}/api/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'ws-test-pid-route' }),
+    });
+
+    const { ws, messages } = await connectWs(`${wsBase}/ws/ws-test-pid-route?cols=80&rows=24`);
+    await waitForMessages(messages, 1);
+    await closeWs(ws);
+
+    const sessions = (await fetch(`${baseUrl}/api/sessions`).then((r) => r.json())) as Array<{
+      id: string;
+      pid: number | null;
+    }>;
+    const session = sessions.find((s) => s.id === 'ws-test-pid-route');
+    expect(session).toBeDefined();
+    expect(typeof session!.pid).toBe('number');
+
+    const res = await fetch(`${baseUrl}/p/${session!.pid}`, { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/s/ws-test-pid-route');
+  });
+
   test('server shuts down when last session exits', async () => {
     await fetch(`${baseUrl}/api/sessions`, {
       method: 'POST',
