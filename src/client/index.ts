@@ -50,32 +50,52 @@ const sessionId = window.location.pathname.split('/s/')[1] ?? 'main';
 // BroadcastChannel focus handshake — focus existing tab instead of mounting a duplicate.
 // Post a focus-request; if an existing tab acks within 200ms, show a fallback UI instead
 // of mounting a second terminal to the same PTY. See deep-link spec.
-const focusChannel = new BroadcastChannel(`webtty:focus:${sessionId}`);
-const isPrimary = await new Promise<boolean>((resolve) => {
-  const timeout = setTimeout(() => resolve(true), 200);
-  focusChannel.onmessage = (e: MessageEvent) => {
-    if (e.data.type === 'focus-ack') {
-      clearTimeout(timeout);
-      resolve(false);
-    } else if (e.data.type === 'focus-request') {
-      window.focus();
-      focusChannel.postMessage({ type: 'focus-ack' });
-    }
-  };
-  focusChannel.postMessage({ type: 'focus-request', sessionId });
-});
+//
+// Only an already-established primary tab replies with focus-ack, so two tabs opened
+// simultaneously cannot both resolve isPrimary=false. BroadcastChannel is feature-detected
+// to fall back gracefully in environments that don't support it (e.g. older Safari).
+let isPrimary = true;
+let focusChannel: BroadcastChannel | null = null;
+
+if (typeof window.BroadcastChannel === 'function') {
+  focusChannel = new BroadcastChannel(`webtty:focus:${sessionId}`);
+  isPrimary = await new Promise<boolean>((resolve) => {
+    const timeout = setTimeout(() => resolve(true), 200);
+    focusChannel!.onmessage = (e: MessageEvent) => {
+      if (
+        e.data !== null &&
+        typeof e.data === 'object' &&
+        typeof e.data.type === 'string' &&
+        e.data.type === 'focus-ack'
+      ) {
+        clearTimeout(timeout);
+        resolve(false);
+      }
+      // Do NOT respond to focus-request here — only an established primary does that.
+      // Responding during the handshake would let two simultaneous tabs ack each other.
+    };
+    focusChannel!.postMessage({ type: 'focus-request', sessionId });
+  });
+}
 
 if (!isPrimary) {
   (document.getElementById('terminal') as HTMLElement).textContent =
     'Session already open in another tab.';
 } else {
   // This is the primary tab — respond to focus-requests from future tabs.
-  focusChannel.onmessage = (e: MessageEvent) => {
-    if (e.data.type === 'focus-request') {
-      window.focus();
-      focusChannel.postMessage({ type: 'focus-ack' });
-    }
-  };
+  if (focusChannel) {
+    focusChannel.onmessage = (e: MessageEvent) => {
+      if (
+        e.data !== null &&
+        typeof e.data === 'object' &&
+        typeof e.data.type === 'string' &&
+        e.data.type === 'focus-request'
+      ) {
+        window.focus();
+        focusChannel!.postMessage({ type: 'focus-ack' });
+      }
+    };
+  }
 
   const config: ClientConfig = await fetch('/api/config').then((r) => r.json());
 

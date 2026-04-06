@@ -71,7 +71,7 @@ export function createSession(id: string): Session {
  * Returns a plain JSON-safe representation of a session for API responses.
  *
  * @param s - The session to serialize.
- * @returns A JSON-safe object with session ID, creation timestamp, and connection status.
+ * @returns A JSON-safe object with session ID, creation timestamp, connection status, and PTY PID (or `null` if no PTY has been spawned yet).
  */
 export function sessionToJson(s: Session) {
   return {
