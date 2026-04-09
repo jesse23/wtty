@@ -1,8 +1,8 @@
 import * as childProcess from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { configDir } from '../config';
-import { BASE_URL, isServerRunning, openBrowser, startServer, stopServer } from './http';
+import { configDir, loadConfig } from '../config';
+import { BASE_URL, PORT, isServerRunning, openBrowser, startServer, stopServer } from './http';
 
 /**
  * Opens (or creates) session `id`, starts the server if needed, and opens the URL in the browser.
@@ -33,7 +33,7 @@ export async function cmdGo(id = 'main'): Promise<void> {
     sessionId = session.id;
   }
 
-  const url = `${BASE_URL}/s/${sessionId}`;
+  const url = `http://${loadConfig().host}:${PORT}/s/${sessionId}`;
   console.log(url);
   openBrowser(url);
 }
