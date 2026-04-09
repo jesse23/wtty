@@ -2,7 +2,7 @@ import * as childProcess from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { configDir, loadConfig } from '../config';
-import { BASE_URL, PORT, isServerRunning, openBrowser, startServer, stopServer } from './http';
+import { BASE_URL, isServerRunning, openBrowser, PORT, startServer, stopServer } from './http';
 
 /**
  * Opens (or creates) session `id`, starts the server if needed, and opens the URL in the browser.
