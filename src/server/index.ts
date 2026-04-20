@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const config = loadConfig();
-const HTTP_PORT = Number(process.env.PORT) || config.port;
+const HTTP_PORT = config.port;
 // 'localhost' resolves to ::1 (IPv6) on modern macOS/Node; bind to 127.0.0.1 instead
 // but keep 'localhost' as the display host so browser URLs use it as intended.
 const HTTP_HOST_DISPLAY = config.host;
