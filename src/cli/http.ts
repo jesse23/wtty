@@ -56,7 +56,14 @@ export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn
     stdio = ['ignore', logFd, logFd];
   }
 
-  const child = _spawn(process.execPath, [serverEntry], {
+  // On Windows, Bun's net.Socket doesn't support the fd-based named-pipe
+  // wrapping that node-pty's ConPTY backend requires, so node-pty fails under
+  // Bun on Windows. bunx works because its #!/usr/bin/env node shim runs the
+  // server with Node.js instead. Mirror that here explicitly.
+  const serverExec =
+    process.platform === 'win32' && process.versions.bun ? 'node' : process.execPath;
+
+  const child = _spawn(serverExec, [serverEntry], {
     detached: true,
     stdio,
     env: { ...process.env, PORT: String(PORT) },
