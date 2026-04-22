@@ -154,20 +154,6 @@ function connect(): void {
 
 connect();
 
-// ghostty-web reports hover mousemove events (e.buttons === 0) as button-32
-// SGR drags to the PTY. Vim with `set mouse=a` interprets button-32 as
-// "extend selection" and enters visual mode. Block no-button mousemove events
-// before ghostty-web sees them so hover never triggers a drag report.
-container.addEventListener(
-  'mousemove',
-  (e: MouseEvent) => {
-    if (term.hasMouseTracking() && e.buttons === 0) {
-      e.stopPropagation();
-    }
-  },
-  { capture: true },
-);
-
 // ghostty-web's Terminal.handleWheel sends \x1b[A/\x1b[B (arrow keys) on the
 // alternate screen regardless of mouse tracking state, moving the cursor instead
 // of scrolling. When the PTY application has enabled mouse tracking (e.g. vim
@@ -261,7 +247,22 @@ window.addEventListener(
 );
 
 // Forward terminal keystrokes and input to the PTY over WebSocket.
+// ghostty-web sends SGR button-32 (\x1b[<32;…M) for both hover motion
+// (e.buttons === 0) and button-1 drag.  Vim with `set mouse=a` treats
+// button-32 as "extend selection", so hover triggers spurious visual mode.
+// Track button state and drop button-32 sequences that arrive while no
+// button is held (pure hover), letting real drags pass through unchanged.
+let mouseButtonsHeld = 0;
+container.addEventListener('mousedown', () => mouseButtonsHeld++, { capture: true });
+container.addEventListener(
+  'mouseup',
+  () => {
+    if (mouseButtonsHeld > 0) mouseButtonsHeld--;
+  },
+  { capture: true },
+);
 term.onData((data: string) => {
+  if (mouseButtonsHeld === 0 && data.startsWith('\x1b[<32;')) return;
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(data);
   }
