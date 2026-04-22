@@ -47,11 +47,22 @@ export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn
   const useNode = process.platform === 'win32' && isBun;
   const serverExec = useNode ? 'node' : process.execPath;
 
-  // When the executor is Node.js it cannot run .ts files directly, so always
-  // resolve to the compiled .js entry regardless of whether the CLI itself is
-  // running from source.
-  const isTs = isBun && !useNode && __filename.endsWith('.ts');
-  const serverEntry = path.resolve(__dirname, isTs ? '../server/index.ts' : '../server/index.js');
+  // Resolve the server entry. When useNode is true the executor is Node.js,
+  // which cannot run .ts files, so we always need the compiled .js output.
+  // The CLI may itself run from source (src/cli/) or from dist (dist/cli/);
+  // adjust the relative path accordingly so we always land in the same dist/.
+  const runningFromSrc = __filename.endsWith('.ts');
+  let serverEntry: string;
+  if (useNode) {
+    serverEntry = runningFromSrc
+      ? path.resolve(__dirname, '../../dist/server/index.js') // src/cli → dist/server
+      : path.resolve(__dirname, '../server/index.js'); // dist/cli → dist/server
+  } else {
+    serverEntry = path.resolve(
+      __dirname,
+      runningFromSrc ? '../server/index.ts' : '../server/index.js',
+    );
+  }
   if (!fs.existsSync(serverEntry)) {
     console.error(`webtty: server entry not found at ${serverEntry}`);
     (process.exit as (code?: number) => void)(1);

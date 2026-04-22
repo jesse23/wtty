@@ -28,8 +28,13 @@ async function runCli(
   port: number,
   ...args: string[]
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  // Write config with the test port so loadConfig() in the CLI subprocess returns the right port.
+  const cfgDir = path.join(tmpHome, '.config', 'webtty');
+  fsModule.mkdirSync(cfgDir, { recursive: true });
+  fsModule.writeFileSync(path.join(cfgDir, 'config.json'), JSON.stringify({ port }));
+
   const proc = Bun.spawn([process.execPath, CLI_ENTRY, ...args], {
-    env: { ...process.env, PORT: String(port), WEBTTY_NO_OPEN: '1', HOME: tmpHome },
+    env: { ...process.env, WEBTTY_NO_OPEN: '1', HOME: tmpHome },
     stdout: 'pipe',
     stderr: 'pipe',
   });
