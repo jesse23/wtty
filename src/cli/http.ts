@@ -39,11 +39,23 @@ export async function isServerRunning(): Promise<boolean> {
  */
 export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn): Promise<void> {
   const isBun = typeof (globalThis as Record<string, unknown>).Bun !== 'undefined';
-  const isTs = isBun && __filename.endsWith('.ts');
+
+  // On Windows, Bun's net.Socket doesn't support the fd-based named-pipe
+  // wrapping that node-pty's ConPTY backend requires, so node-pty fails under
+  // Bun on Windows. bunx works because its #!/usr/bin/env node shim runs the
+  // server with Node.js instead. Mirror that here explicitly.
+  const useNode = process.platform === 'win32' && isBun;
+  const serverExec = useNode ? 'node' : process.execPath;
+
+  // When the executor is Node.js it cannot run .ts files directly, so always
+  // resolve to the compiled .js entry regardless of whether the CLI itself is
+  // running from source.
+  const isTs = isBun && !useNode && __filename.endsWith('.ts');
   const serverEntry = path.resolve(__dirname, isTs ? '../server/index.ts' : '../server/index.js');
   if (!fs.existsSync(serverEntry)) {
     console.error(`webtty: server entry not found at ${serverEntry}`);
-    process.exit(1);
+    (process.exit as (code?: number) => void)(1);
+    return;
   }
 
   const config = loadConfig();
@@ -56,10 +68,17 @@ export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn
     stdio = ['ignore', logFd, logFd];
   }
 
-  const child = _spawn(process.execPath, [serverEntry], {
+  const child = _spawn(serverExec, [serverEntry], {
     detached: true,
     stdio,
     env: { ...process.env, PORT: String(PORT) },
+  });
+  child.on('error', (err) => {
+    const hint = useNode
+      ? ' (Node.js must be on PATH when running webtty under Bun on Windows)'
+      : '';
+    console.error(`webtty: failed to start server: ${err.message}${hint}`);
+    process.exit(1);
   });
   child.unref();
   if (logFd !== undefined) fs.closeSync(logFd);

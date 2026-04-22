@@ -101,7 +101,7 @@ describe('startServer', () => {
     const mkdirSpy = spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
     const openSpy = spyOn(fs, 'openSync').mockReturnValue(99);
     const closeSpy = spyOn(fs, 'closeSync').mockImplementation(() => {});
-    const fakeChild = { unref: mock(() => {}) };
+    const fakeChild = { unref: mock(() => {}), on: mock(() => {}) };
     const spawnMock = mock(() => fakeChild);
 
     globalThis.fetch = mock(
@@ -152,7 +152,7 @@ describe('startServer', () => {
 
   test('spawns server and resolves when it becomes reachable', async () => {
     const existsSpy = spyOn(fs, 'existsSync').mockReturnValue(true);
-    const fakeChild = { unref: mock(() => {}) };
+    const fakeChild = { unref: mock(() => {}), on: mock(() => {}) };
     const spawnMock = mock(() => fakeChild);
 
     let calls = 0;
@@ -162,6 +162,11 @@ describe('startServer', () => {
       return new Response('[]', { status: 200 });
     }) as unknown as typeof fetch;
 
+    const configModule = await import('../config');
+    const configSpy = spyOn(configModule, 'loadConfig').mockReturnValue({
+      ...configModule.DEFAULT_CONFIG,
+    });
+
     const { startServer } = await import('./http');
     await startServer(10000, spawnMock as never);
 
@@ -169,17 +174,23 @@ describe('startServer', () => {
     expect(fakeChild.unref).toHaveBeenCalled();
 
     existsSpy.mockRestore();
+    configSpy.mockRestore();
   });
 
   test('exits with error when server does not start within timeout', async () => {
     const existsSpy = spyOn(fs, 'existsSync').mockReturnValue(true);
-    const spawnMock = mock(() => ({ unref: () => {} }));
+    const spawnMock = mock(() => ({ unref: () => {}, on: () => {} }));
     const exitSpy = spyOn(process, 'exit').mockImplementation((() => {}) as () => never);
     const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
 
     globalThis.fetch = mock(async () => {
       throw new Error('not yet');
     }) as unknown as typeof fetch;
+
+    const configModule = await import('../config');
+    const configSpy = spyOn(configModule, 'loadConfig').mockReturnValue({
+      ...configModule.DEFAULT_CONFIG,
+    });
 
     const { startServer } = await import('./http');
     await startServer(100, spawnMock as never);
@@ -190,6 +201,7 @@ describe('startServer', () => {
     existsSpy.mockRestore();
     exitSpy.mockRestore();
     errorSpy.mockRestore();
+    configSpy.mockRestore();
   });
 });
 
