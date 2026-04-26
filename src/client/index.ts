@@ -1,5 +1,6 @@
 import { FitAddon, init, Terminal } from 'ghostty-web';
 import { applyDecscusr } from './cursor';
+import { isDuplicateDrag, rewriteHoverMotion } from './mouse';
 
 interface KeyboardBinding {
   key: string;
@@ -247,33 +248,8 @@ window.addEventListener(
 );
 
 // Forward terminal keystrokes and input to the PTY over WebSocket.
-//
-// ghostty-web bug: handleMouseMove always encodes motion as SGR button-32
-// (\x1b[<32;col;rowM) regardless of whether a button is held.  It uses its
-// own mouseButtonsPressed bitmask; when no button is pressed the bitmask is 0,
-// and 0+32=32 — the same Cb value as a left-button drag.  Real terminals use
-// Cb=35 (32+3, "no button") for hover and Cb=32 for left-button drag.
-//
-// Impact on vim: with `set mouse=a` vim requests mode 1003 (any-event
-// tracking).  Every hover move arrives as \x1b[<32;…M which vim decodes as
-// <LeftDrag>, toggling visual mode on each pixel of cursor movement.
-//
-// Fix 1 — hover rewrite: a capture-phase mousemove listener reads the DOM
-// event's authoritative e.buttons *before* ghostty-web's bubble-phase handler
-// encodes it.  When e.buttons===0 (hover), onData rewrites \x1b[<32; to
-// \x1b[<35; so vim receives the correct no-button code.  The position is still
-// forwarded so vim can track the cursor for subsequent drag operations.
-//
-// Fix 2 — drag dedup: ghostty-web fires multiple mousemove events for the same
-// character cell while the pointer stays within it.  Vim treats a <LeftDrag>
-// at the same cell twice as a toggle (enter visual → exit visual), so we
-// deduplicate consecutive identical drag sequences before forwarding.
-//
-// Safety on other platforms: the rewrite only fires when hasMouseTracking()
-// is true AND e.buttons===0.  On macOS (or any platform where ghostty-web
-// correctly encodes hover as 35 or where vim uses mode 1002 and ghostty-web
-// already skips hover motion), the condition is never met and the data passes
-// through unchanged.
+// See src/client/mouse.ts for the ghostty-web SGR bug and the two fixes
+// (hover rewrite + drag dedup) applied below.
 let isHoverMove = false;
 let lastDragSeq = '';
 container.addEventListener(
@@ -285,20 +261,14 @@ container.addEventListener(
   { capture: true },
 );
 term.onData((data: string) => {
-  if (isHoverMove && data.startsWith('\x1b[<32;')) {
-    // Hover: rewrite Cb 32 → 35 (no-button motion per SGR spec)
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(data.replace('\x1b[<32;', '\x1b[<35;'));
-    }
+  const seq = rewriteHoverMotion(data, isHoverMove);
+  if (seq !== data) {
+    // Hover: forwarded with corrected Cb=35 (no-button motion per SGR spec)
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(seq);
     return;
   }
-  if (data.startsWith('\x1b[<32;')) {
-    // Drag: drop duplicate same-cell events to prevent vim visual-mode toggle
-    if (data === lastDragSeq) return;
-    lastDragSeq = data;
-  } else {
-    lastDragSeq = ''; // any non-drag event resets the dedup guard
-  }
+  if (isDuplicateDrag(data, lastDragSeq)) return; // drop same-cell drag repeat
+  lastDragSeq = data.startsWith('\x1b[<32;') ? data : ''; // track or reset
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(data);
   }
