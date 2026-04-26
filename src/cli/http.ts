@@ -86,7 +86,7 @@ export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn
   const child = _spawn(serverExec, [serverEntry], {
     detached: true,
     stdio,
-    env: { ...process.env, PORT: String(getPort()) },
+    env: { ...process.env, PORT: String(config.port) },
   });
   child.on('error', (err) => {
     const hint = useNode
