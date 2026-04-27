@@ -13,9 +13,22 @@ function waitForData(received: string[], content: string, timeout = 3000): Promi
   });
 }
 
+// On Windows use COMSPEC (the full path to cmd.exe) to bypass any PATH shims
+// that shell enhancers like clink install (clink wraps cmd.exe with a bat launcher).
+const TEST_SHELL = process.platform === 'win32' ? (process.env.COMSPEC ?? 'cmd.exe') : '/bin/sh';
+
+// On Windows, Bun's ConPTY/net.Socket integration has a known issue where the
+// pipe closes after the initial banner is written, causing ERR_SOCKET_CLOSED on
+// the first PTY write. The server always runs under Node on Windows (see http.ts),
+// so skip the interactive data test under Bun on Windows — it passes in CI (Linux)
+// and under Node on Windows.
+const isBunOnWindows =
+  process.platform === 'win32' &&
+  typeof (globalThis as Record<string, unknown>).Bun !== 'undefined';
+
 describe('spawnForSession', () => {
   test('returns a PtyProcess with the expected interface', () => {
-    const pty = spawnForSession(80, 24, '/bin/sh', 'xterm-256color', 'truecolor');
+    const pty = spawnForSession(80, 24, TEST_SHELL, 'xterm-256color', 'truecolor');
 
     expect(typeof pty.onData).toBe('function');
     expect(typeof pty.onExit).toBe('function');
@@ -27,16 +40,20 @@ describe('spawnForSession', () => {
     pty.kill();
   });
 
-  test('spawned process can receive data', async () => {
-    const pty = spawnForSession(80, 24, '/bin/sh', 'xterm-256color', 'truecolor');
+  test.skipIf(isBunOnWindows)('spawned process can receive data', async () => {
+    const pty = spawnForSession(80, 24, TEST_SHELL, 'xterm-256color', 'truecolor');
     const received: string[] = [];
     pty.onData((data) => received.push(data));
 
-    pty.write('echo __ready__\n');
+    const echoReady = process.platform === 'win32' ? 'echo __ready__\r\n' : 'echo __ready__\n';
+    const echoHello = process.platform === 'win32' ? 'echo hello-pty\r\n' : 'echo hello-pty\n';
+    const exitCmd = process.platform === 'win32' ? 'exit\r\n' : 'exit\n';
+
+    pty.write(echoReady);
     await waitForData(received, '__ready__');
-    pty.write('echo hello-pty\n');
+    pty.write(echoHello);
     await waitForData(received, 'hello-pty');
-    pty.write('exit\n');
+    pty.write(exitCmd);
 
     await new Promise<void>((resolve) => pty.onExit(() => resolve()));
     expect(received.join('')).toContain('hello-pty');

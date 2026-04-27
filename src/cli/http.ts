@@ -7,11 +7,15 @@ import { configDir, loadConfig } from '../config';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/** Active server port, resolved from `PORT` env or config default. */
-export const PORT = Number(process.env.PORT) || 2346;
+/** Active server port, read from config on first call (env PORT is intentionally ignored). */
+export function getPort(): number {
+  return loadConfig().port;
+}
 
 /** Base URL for internal CLI↔server API calls (always 127.0.0.1, avoids IPv6 lookup). */
-export const BASE_URL = `http://127.0.0.1:${PORT}`;
+export function getBaseUrl(): string {
+  return `http://127.0.0.1:${getPort()}`;
+}
 
 /** Returns the path to the server log file: `~/.config/webtty/server.log`. */
 export function logPath(): string {
@@ -21,7 +25,7 @@ export function logPath(): string {
 /** Returns `true` if the webtty server is reachable and responding to API requests. */
 export async function isServerRunning(): Promise<boolean> {
   try {
-    const res = await fetch(`${BASE_URL}/api/sessions`);
+    const res = await fetch(`${getBaseUrl()}/api/sessions`);
     if (!res.ok) return false;
     const body = await res.json();
     return Array.isArray(body);
@@ -47,11 +51,22 @@ export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn
   const useNode = process.platform === 'win32' && isBun;
   const serverExec = useNode ? 'node' : process.execPath;
 
-  // When the executor is Node.js it cannot run .ts files directly, so always
-  // resolve to the compiled .js entry regardless of whether the CLI itself is
-  // running from source.
-  const isTs = isBun && !useNode && __filename.endsWith('.ts');
-  const serverEntry = path.resolve(__dirname, isTs ? '../server/index.ts' : '../server/index.js');
+  // Resolve the server entry. When useNode is true the executor is Node.js,
+  // which cannot run .ts files, so we always need the compiled .js output.
+  // The CLI may itself run from source (src/cli/) or from dist (dist/cli/);
+  // adjust the relative path accordingly so we always land in the same dist/.
+  const runningFromSrc = __filename.endsWith('.ts');
+  let serverEntry: string;
+  if (useNode) {
+    serverEntry = runningFromSrc
+      ? path.resolve(__dirname, '../../dist/server/index.js') // src/cli → dist/server
+      : path.resolve(__dirname, '../server/index.js'); // dist/cli → dist/server
+  } else {
+    serverEntry = path.resolve(
+      __dirname,
+      runningFromSrc ? '../server/index.ts' : '../server/index.js',
+    );
+  }
   if (!fs.existsSync(serverEntry)) {
     console.error(`webtty: server entry not found at ${serverEntry}`);
     (process.exit as (code?: number) => void)(1);
@@ -71,7 +86,7 @@ export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn
   const child = _spawn(serverExec, [serverEntry], {
     detached: true,
     stdio,
-    env: { ...process.env, PORT: String(PORT) },
+    env: { ...process.env, PORT: String(config.port) },
   });
   child.on('error', (err) => {
     const hint = useNode
@@ -95,11 +110,14 @@ export async function startServer(timeoutMs = 10000, _spawn = childProcess.spawn
 /**
  * Sends `POST /api/server/stop`, then polls until the server is no longer reachable.
  *
- * @param baseUrl - The server base URL (default: BASE_URL).
+ * @param baseUrl - The server base URL (default: getBaseUrl()).
  * @param timeoutMs - Maximum time to wait for the server to stop (default: 5000 ms).
  * @returns `true` if the server stopped successfully, `false` otherwise.
  */
-export async function stopServer(baseUrl: string = BASE_URL, timeoutMs = 5000): Promise<boolean> {
+export async function stopServer(
+  baseUrl: string = getBaseUrl(),
+  timeoutMs = 5000,
+): Promise<boolean> {
   try {
     const res = await fetch(`${baseUrl}/api/server/stop`, { method: 'POST' });
     if (!res.ok) return false;

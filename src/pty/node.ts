@@ -19,7 +19,12 @@ export function spawn(
   term: string,
   colorTerm: string,
 ): PtyProcess {
-  const ptyProc = nodePty.spawn(shell, [], {
+  // On Windows, cmd.exe may have an AutoRun registry key that launches shell
+  // enhancers (e.g. clink). These take over the ConPTY pipe and cause
+  // ERR_SOCKET_CLOSED on the first write. Pass /d to disable AutoRun.
+  const shellArgs = process.platform === 'win32' && /cmd\.exe$/i.test(shell) ? ['/d'] : [];
+
+  const ptyProc = nodePty.spawn(shell, shellArgs, {
     name: term,
     cols,
     rows,

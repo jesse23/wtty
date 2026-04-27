@@ -1,5 +1,6 @@
 import { FitAddon, init, Terminal } from 'ghostty-web';
 import { applyDecscusr } from './cursor';
+import { isDuplicateDrag, rewriteHoverMotion } from './mouse';
 
 interface KeyboardBinding {
   key: string;
@@ -91,8 +92,23 @@ function fit(): void {
   container.style.paddingBottom = `${Math.ceil(vGap / 2)}px`;
 }
 
-fit();
-new ResizeObserver(() => fit()).observe(container, { box: 'border-box' });
+// Both ResizeObserver and window 'resize' can fire for the same physical event.
+// Schedule through rAF so multiple signals coalesce into one fit per frame.
+let pendingFitFrame: number | null = null;
+function scheduleFit(): void {
+  if (pendingFitFrame !== null) return;
+  pendingFitFrame = window.requestAnimationFrame(() => {
+    pendingFitFrame = null;
+    fit();
+  });
+}
+
+scheduleFit();
+new ResizeObserver(() => scheduleFit()).observe(container, { box: 'border-box' });
+// ResizeObserver misses monitor hot-plug and DPI changes because those resize
+// the viewport without changing the container's layout box. window resize fires
+// reliably for both, so use both observers together.
+window.addEventListener('resize', scheduleFit);
 
 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 let ws: WebSocket;
@@ -232,7 +248,27 @@ window.addEventListener(
 );
 
 // Forward terminal keystrokes and input to the PTY over WebSocket.
+// See src/client/mouse.ts for the ghostty-web SGR bug and the two fixes
+// (hover rewrite + drag dedup) applied below.
+let isHoverMove = false;
+let lastDragSeq = '';
+container.addEventListener(
+  'mousemove',
+  (e: MouseEvent) => {
+    isHoverMove = term.hasMouseTracking() && e.buttons === 0;
+    if (isHoverMove) lastDragSeq = ''; // reset dedup on button release
+  },
+  { capture: true },
+);
 term.onData((data: string) => {
+  const seq = rewriteHoverMotion(data, isHoverMove);
+  if (seq !== data) {
+    // Hover: forwarded with corrected Cb=35 (no-button motion per SGR spec)
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(seq);
+    return;
+  }
+  if (isDuplicateDrag(data, lastDragSeq)) return; // drop same-cell drag repeat
+  lastDragSeq = data.startsWith('\x1b[<32;') ? data : ''; // track or reset
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(data);
   }
