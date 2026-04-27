@@ -682,7 +682,8 @@ describe('cli — unit (mocked http)', () => {
       {} as ReturnType<typeof childProcessModule.spawnSync>,
     );
     cmds.cmdConfig();
-    process.env.HOME = origHome;
+    if (origHome === undefined) delete process.env.HOME;
+    else process.env.HOME = origHome;
     mkdirSpy.mockRestore();
     spawnSpy.mockRestore();
   });

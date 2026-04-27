@@ -8,8 +8,19 @@ import { cleanupTmpHome, getFreePort, makeTmpHome, waitForServer } from '../util
 const ANSI_RE = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 const stripAnsi = (s: string) => s.replace(ANSI_RE, '');
 
+// cmd.exe requires CR+LF to execute commands; sh/bash accept LF alone.
+const NL = process.platform === 'win32' ? '\r\n' : '\n';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SERVER_ENTRY = path.resolve(__dirname, 'index.ts');
+
+// On Windows, Bun's ConPTY/net.Socket integration doesn't support the pipe
+// handles node-pty requires. Mirror the same workaround as http.ts: run the
+// server under Node when on Windows+Bun so node-pty works correctly.
+const isBun = typeof (globalThis as Record<string, unknown>).Bun !== 'undefined';
+const useNode = process.platform === 'win32' && isBun;
+const SERVER_EXEC = useNode ? 'node' : process.execPath;
+const SERVER_ENTRY = useNode
+  ? path.resolve(__dirname, '../../dist/server/index.js')
+  : path.resolve(__dirname, 'index.ts');
 
 function connectWs(wsUrl: string): Promise<{ ws: WebSocket; messages: string[] }> {
   return new Promise((resolve, reject) => {
@@ -39,7 +50,7 @@ function waitForPrompt(messages: string[], timeout = 3000): Promise<void> {
     const deadline = Date.now() + timeout;
     const check = () => {
       const all = messages.join('');
-      if (all.includes('\x1b]133;B') || all.match(/[$%#>➜] *$/m)) return resolve();
+      if (all.includes('\x1b]133;B') || all.match(/[$%#>➜](?:\s|\x1b|$)/m)) return resolve();
       if (Date.now() > deadline) return reject(new Error('Timeout waiting for shell prompt'));
       setTimeout(check, 50);
     };
@@ -80,8 +91,17 @@ describe('websocket', () => {
     port = await getFreePort();
     baseUrl = `http://127.0.0.1:${port}`;
     wsBase = `ws://127.0.0.1:${port}`;
-    proc = spawn(process.execPath, [SERVER_ENTRY], {
-      env: { ...process.env, PORT: String(port), HOME: tmpHome, SHELL: '/bin/sh' },
+    proc = spawn(SERVER_EXEC, [SERVER_ENTRY], {
+      env: {
+        ...process.env,
+        PORT: String(port),
+        HOME: tmpHome,
+        // Let the server resolve the shell via its own platform detection (config.ts).
+        // Forcing /bin/sh here breaks Windows where that path does not exist.
+        ...(process.platform !== 'win32' && { SHELL: '/bin/sh' }),
+        // On Windows, clink (if installed) auto-injects into cmd.exe and breaks PTY socket writes.
+        ...(process.platform === 'win32' && { CLINK_NOAUTORUN: '1' }),
+      },
       stdio: 'ignore',
     });
     await waitForServer(baseUrl);
@@ -155,7 +175,7 @@ describe('websocket', () => {
 
     await waitForPrompt(m1);
 
-    ws1.send('echo hello-fanout\n');
+    ws1.send(`echo hello-fanout${NL}`);
     await waitForContent(m1, 'hello-fanout');
     await waitForContent(m2, 'hello-fanout');
 
@@ -177,7 +197,7 @@ describe('websocket', () => {
     await waitForMessages(messages, 1);
 
     const closeCode = new Promise<number>((resolve) => ws.on('close', (code) => resolve(code)));
-    ws.send('exit\n');
+    ws.send(`exit${NL}`);
     expect(await closeCode).toBe(4001);
 
     const res = await fetch(`${baseUrl}/api/sessions/ws-test-exit`);
@@ -197,7 +217,7 @@ describe('websocket', () => {
 
     ws.send(JSON.stringify({ type: 'resize', cols: 120, rows: 40 }));
 
-    ws.send('echo resize-ok\n');
+    ws.send(`echo resize-ok${NL}`);
     await waitForContent(messages, 'resize-ok');
     await closeWs(ws);
 
@@ -245,7 +265,7 @@ describe('websocket', () => {
     const { ws, messages } = await connectWs(`${wsBase}/ws/ws-test-last?cols=80&rows=24`);
     await waitForMessages(messages, 1);
 
-    ws.send('exit\n');
+    ws.send(`exit${NL}`);
     await new Promise<void>((resolve) => ws.on('close', () => resolve()));
 
     const deadline = Date.now() + 3000;
